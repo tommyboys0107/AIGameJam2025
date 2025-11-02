@@ -278,19 +278,110 @@ h1 {
     animation: glitch 0.3s infinite;
 }
 
-/* Main Menu Styles */
-#main-menu {
-    background: radial-gradient(circle at center, rgba(0, 191, 255, 0.1) 0%, rgba(0, 0, 0, 0.9) 70%);
+/* Start Screen Styles */
+#start-screen {
+    background-image: url('../assets/TitleArt.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    position: relative;
+}
+
+#start-content {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
     justify-content: center;
     align-items: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.start-button {
+    background: linear-gradient(45deg, rgba(0, 191, 255, 0.3), rgba(0, 255, 65, 0.3));
+    border: 3px solid #00BFFF;
+    color: #00BFFF;
+    font-family: 'Courier New', monospace;
+    font-size: 2rem;
+    font-weight: bold;
+    padding: 20px 60px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    text-shadow: 0 0 15px #00BFFF;
+    box-shadow: 0 0 30px rgba(0, 191, 255, 0.5);
+    border-radius: 10px;
+    backdrop-filter: blur(5px);
+    white-space: nowrap;
+    min-width: fit-content;
+    pointer-events: auto;
+    z-index: 100;
+}
+
+.start-button:hover {
+    background: linear-gradient(45deg, rgba(0, 191, 255, 0.5), rgba(0, 255, 65, 0.5));
+    border-color: #00FF41;
+    color: #00FF41;
+    text-shadow: 0 0 20px #00FF41;
+    box-shadow: 0 0 40px rgba(0, 255, 65, 0.7);
+    transform: scale(1.1);
+}
+
+.start-button:active {
+    transform: scale(1.05);
+}
+
+.start-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s;
+}
+
+.start-button:hover::before {
+    left: 100%;
+}
+}
+
+/* Main Menu Styles */
+#main-menu {
+    background-image: url('../assets/TitleArt.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+#main-menu::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.9) 70%);
+    z-index: 1;
 }
 
 #menu-content {
     text-align: center;
     max-width: 800px;
+    width: 100%;
     padding: 40px;
     z-index: 10;
     position: relative;
+    margin: 0 auto;
 }
 
 #title-section {
@@ -426,7 +517,7 @@ h1 {
         linear-gradient(90deg, rgba(0, 191, 255, 0.1) 1px, transparent 1px);
     background-size: 50px 50px;
     animation: gridMove 20s linear infinite;
-    z-index: 1;
+    z-index: 5;
 }
 
 /* Menu Animations */
@@ -460,6 +551,50 @@ h1 {
 @keyframes gridMove {
     0% { transform: translate(0, 0); }
     100% { transform: translate(50px, 50px); }
+}
+
+/* Responsive design for start screen */
+@media (max-width: 768px) {
+    .start-button {
+        font-size: 1.5rem;
+        padding: 15px 40px;
+        letter-spacing: 2px;
+    }
+    
+    #start-content {
+        padding: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .start-button {
+        font-size: 1.2rem;
+        padding: 12px 30px;
+        letter-spacing: 1px;
+    }
+    
+    #start-content {
+        padding: 10px;
+    }
+}
+
+/* For very tall screens */
+@media (min-height: 800px) {
+    #start-content {
+        padding: 30px;
+    }
+}
+
+/* For very short screens */
+@media (max-height: 600px) {
+    #start-content {
+        padding: 10px;
+    }
+    
+    .start-button {
+        font-size: 1.5rem;
+        padding: 12px 40px;
+    }
 }
 
 /* Responsive design for menu */
@@ -744,5 +879,48 @@ h1 {
     .game-over-button {
         width: 100%;
         max-width: 250px;
+    }
+}/* Respo
+nsive design for start screen */
+@media (max-width: 768px) {
+    .start-button {
+        font-size: 1.5rem;
+        padding: 15px 40px;
+        letter-spacing: 2px;
+    }
+    
+    #start-content {
+        padding: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .start-button {
+        font-size: 1.2rem;
+        padding: 12px 30px;
+        letter-spacing: 1px;
+    }
+    
+    #start-content {
+        padding: 10px;
+    }
+}
+
+/* For very tall screens */
+@media (min-height: 800px) {
+    #start-content {
+        padding: 30px;
+    }
+}
+
+/* For very short screens */
+@media (max-height: 600px) {
+    #start-content {
+        padding: 10px;
+    }
+    
+    .start-button {
+        font-size: 1.5rem;
+        padding: 12px 40px;
     }
 }

@@ -3,6 +3,15 @@ import { GamePhase } from '../core/constants.js';
 
 export class UIManager {
     constructor() {
+        this.currentCorruption = 0;
+        this.maxCorruption = 100;
+        this.hudElements = {};
+        
+        // Initialize HUD elements only when needed
+        this.initializeHUDElements();
+    }
+    
+    initializeHUDElements() {
         this.hudElements = {
             statusMessage: document.getElementById('status-message'),
             currentPhase: document.getElementById('current-phase'),
@@ -10,14 +19,12 @@ export class UIManager {
             corruptionFill: document.getElementById('corruption-fill'),
             corruptionPercentage: document.getElementById('corruption-percentage')
         };
-        
-        this.currentCorruption = 0;
-        this.maxCorruption = 100;
-        
-        this.initializeHUD();
     }
     
     initializeHUD() {
+        // Re-initialize HUD elements in case they weren't available before
+        this.initializeHUDElements();
+        
         // Set initial HUD state
         this.updateSystemStatus('OPERATIONAL');
         this.updatePhase(GamePhase.CODE);
@@ -167,6 +174,54 @@ export class UIManager {
         }
     }
     
+    // Start Screen functionality
+    initializeStartScreen() {
+        // Add a small delay to ensure DOM is fully loaded
+        setTimeout(() => {
+            const startGameButton = document.getElementById('start-game-button');
+            if (startGameButton) {
+                console.log('Start screen button found and event listener added');
+                startGameButton.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    console.log('Start button clicked, transitioning to main menu');
+                    this.showMainMenu();
+                });
+                
+                // Also add a test to make sure the button is clickable
+                startGameButton.style.pointerEvents = 'auto';
+                startGameButton.style.cursor = 'pointer';
+            } else {
+                console.error('Start game button not found!');
+                // List all elements with class 'start-button' for debugging
+                const allStartButtons = document.querySelectorAll('.start-button');
+                console.log('Found start buttons:', allStartButtons.length);
+                allStartButtons.forEach((btn, index) => {
+                    console.log(`Button ${index}:`, btn.id, btn.textContent);
+                });
+            }
+        }, 100);
+    }
+    
+    showMainMenu() {
+        console.log('showMainMenu called');
+        // Add screen transition effect
+        const startScreen = document.getElementById('start-screen');
+        if (startScreen) {
+            console.log('Start screen found, beginning transition');
+            startScreen.style.transition = 'opacity 0.5s ease-out';
+            startScreen.style.opacity = '0';
+            
+            setTimeout(() => {
+                console.log('Showing main menu screen');
+                this.showScreen('main-menu');
+                // Reset start screen opacity for future use
+                startScreen.style.opacity = '1';
+            }, 500);
+        } else {
+            console.error('Start screen not found!');
+        }
+    }
+
     // Main Menu functionality
     initializeMainMenu() {
         const startButton = document.getElementById('start-button');
@@ -211,6 +266,8 @@ export class UIManager {
             
             setTimeout(() => {
                 this.showScreen('game-screen');
+                // Initialize HUD when entering game screen
+                this.initializeHUD();
                 // Reset menu opacity for future use
                 mainMenu.style.opacity = '1';
                 

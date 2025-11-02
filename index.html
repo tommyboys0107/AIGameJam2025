@@ -4,12 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Human Firewall</title>
-    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/main.css?v=2">
 </head>
 <body>
     <div id="game-container">
+        <!-- Start screen with title art -->
+        <div id="start-screen" class="screen">
+            <div id="start-content">
+                <button id="start-game-button" class="start-button">START</button>
+            </div>
+        </div>
+
         <!-- Main menu -->
-        <div id="main-menu" class="screen">
+        <div id="main-menu" class="screen hidden" style="background-image: url('assets/TitleArt.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat;"></div>
             <div id="menu-content">
                 <div id="title-section">
                     <h1 id="main-title">HUMAN FIREWALL</h1>
@@ -155,15 +162,40 @@
 
     <!-- Initialize UI components -->
     <script type="module">
-        import { UIManager } from './js/ui/UIManager.js';
-        
-        // Initialize UI when DOM is loaded
+        // Simple test first
         document.addEventListener('DOMContentLoaded', () => {
-            const uiManager = new UIManager();
-            uiManager.initializeMainMenu();
-            uiManager.initializeGameOver();
+            console.log('DOM loaded, testing button...');
             
-            console.log('Human Firewall - UI System initialized');
+            // Direct button test
+            setTimeout(() => {
+                const startButton = document.getElementById('start-game-button');
+                console.log('Button found:', startButton);
+                
+                if (startButton) {
+                    console.log('Adding direct click listener...');
+                    startButton.addEventListener('click', () => {
+                        console.log('Direct button clicked!');
+                        
+                        // Hide start screen and show main menu
+                        const startScreen = document.getElementById('start-screen');
+                        const mainMenu = document.getElementById('main-menu');
+                        
+                        if (startScreen && mainMenu) {
+                            startScreen.classList.add('hidden');
+                            mainMenu.classList.remove('hidden');
+                            console.log('Screen transition completed');
+                        }
+                    });
+                }
+                
+                // Now load the full UI Manager
+                import('./js/ui/UIManager.js').then(({ UIManager }) => {
+                    const uiManager = new UIManager();
+                    uiManager.initializeMainMenu();
+                    uiManager.initializeGameOver();
+                    console.log('Human Firewall - UI System initialized');
+                });
+            }, 100);
         });
     </script>
 </body>
