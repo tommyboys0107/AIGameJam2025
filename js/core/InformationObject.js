@@ -16,9 +16,14 @@ export class InformationObject {
         this.x = x;
         this.y = y;
         
-        // Default dimensions (will be adjusted for images based on aspect ratio)
-        this.baseWidth = 280;   // Base width for consistent sizing
-        this.baseHeight = 140;  // Base height for consistent sizing
+        // Set base dimensions based on content type
+        if (data.contentType === ContentType.IMAGE) {
+            this.baseWidth = 200;   // Larger base width for images
+            this.baseHeight = 150;  // Larger base height for images
+        } else {
+            this.baseWidth = 280;   // Base width for text/code
+            this.baseHeight = 140;  // Base height for text/code
+        }
         this.width = this.baseWidth;
         this.height = this.baseHeight;
         
@@ -263,6 +268,46 @@ export class InformationObject {
     }
 
     /**
+     * Adjusts object dimensions to maintain image aspect ratio
+     * @private
+     */
+    adjustDimensionsForImage() {
+        if (!this.imageLoaded || !this.imageElement) return;
+        
+        const imageAspectRatio = this.originalImageWidth / this.originalImageHeight;
+        const containerAspectRatio = this.baseWidth / this.baseHeight;
+        
+        // Maintain the base area while preserving aspect ratio
+        if (imageAspectRatio > containerAspectRatio) {
+            // Image is wider - fit to width
+            this.width = this.baseWidth;
+            this.height = this.baseWidth / imageAspectRatio;
+        } else {
+            // Image is taller - fit to height
+            this.height = this.baseHeight;
+            this.width = this.baseHeight * imageAspectRatio;
+        }
+        
+        // Ensure minimum dimensions for clickability
+        const minWidth = 120;
+        const minHeight = 80;
+        
+        if (this.width < minWidth) {
+            const scale = minWidth / this.width;
+            this.width = minWidth;
+            this.height *= scale;
+        }
+        
+        if (this.height < minHeight) {
+            const scale = minHeight / this.height;
+            this.height = minHeight;
+            this.width *= scale;
+        }
+        
+        console.log(`📐 Adjusted dimensions for image: ${this.width.toFixed(0)}x${this.height.toFixed(0)} (original: ${this.originalImageWidth}x${this.originalImageHeight})`);
+    }
+
+    /**
      * Renders image content
      * @param {CanvasRenderingContext2D} ctx - Canvas rendering context
      * @private
@@ -270,21 +315,44 @@ export class InformationObject {
     renderImage(ctx) {
         if (this.imageLoaded && this.imageElement) {
             try {
-                // Draw image with padding inside the object bounds
-                const padding = 5;
+                const padding = 8;
+                const availableWidth = this.width - (padding * 2);
+                const availableHeight = this.height - (padding * 2);
+                
+                // Calculate the best fit for the image while maintaining aspect ratio
+                const imageAspectRatio = this.originalImageWidth / this.originalImageHeight;
+                const containerAspectRatio = availableWidth / availableHeight;
+                
+                let drawWidth, drawHeight, drawX, drawY;
+                
+                if (imageAspectRatio > containerAspectRatio) {
+                    // Image is wider - fit to width
+                    drawWidth = availableWidth;
+                    drawHeight = availableWidth / imageAspectRatio;
+                    drawX = this.x + padding;
+                    drawY = this.y + padding + (availableHeight - drawHeight) / 2;
+                } else {
+                    // Image is taller - fit to height
+                    drawHeight = availableHeight;
+                    drawWidth = availableHeight * imageAspectRatio;
+                    drawX = this.x + padding + (availableWidth - drawWidth) / 2;
+                    drawY = this.y + padding;
+                }
+                
+                // Draw the image with correct aspect ratio
                 ctx.drawImage(
                     this.imageElement,
-                    this.x + padding,
-                    this.y + padding,
-                    this.width - (padding * 2),
-                    this.height - (padding * 2)
+                    drawX,
+                    drawY,
+                    drawWidth,
+                    drawHeight
                 );
                 
                 // Add debug border for images (optional, can be removed)
                 if (window.DEBUG_IMAGES) {
                     ctx.strokeStyle = this.isCorrupted ? '#FF4444' : '#00FF41';
                     ctx.lineWidth = 2;
-                    ctx.strokeRect(this.x + padding, this.y + padding, this.width - (padding * 2), this.height - (padding * 2));
+                    ctx.strokeRect(drawX, drawY, drawWidth, drawHeight);
                 }
                 
             } catch (error) {

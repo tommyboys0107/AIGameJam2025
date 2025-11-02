@@ -9,7 +9,7 @@
     "baseSpawnIntervalMin": 0.3,
     "baseSpawnIntervalMax": 0.7,
     "maxConcurrentObjects": 20,
-    "movementSpeed": 3.0,
+    "movementSpeed": 1.5,
     "spawnPositions": {
       "top": { "x": "random", "y": -50 },
       "left": { "x": -50, "y": "random" },
@@ -73,9 +73,9 @@
     "codeDisplayDuration": 4.0,
     "contentFadeInDuration": 0.5,
     "contentSizes": {
-      "text": { "width": 200, "height": 60 },
-      "image": { "width": 80, "height": 80 },
-      "code": { "width": 250, "height": 100 }
+      "text": { "width": 280, "height": 140 },
+      "image": { "width": 200, "height": 150 },
+      "code": { "width": 280, "height": 140 }
     }
   },
   "audioSettings": {
