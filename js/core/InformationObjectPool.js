@@ -162,6 +162,9 @@ export class InformationObjectPool {
      * @param {number} screenHeight - Height of the game screen for boundary checking
      */
     updateActiveObjects(deltaTime, screenHeight) {
+        const initialCount = this.activeObjects.length;
+        let removedCount = 0;
+        
         // Update all active objects
         for (let i = this.activeObjects.length - 1; i >= 0; i--) {
             const obj = this.activeObjects[i];
@@ -171,12 +174,20 @@ export class InformationObjectPool {
                 
                 // Check if object has reached bottom of screen
                 if (obj.hasReachedBottom(screenHeight)) {
+                    console.log(`🗑️ Removing object that reached bottom: y=${obj.y.toFixed(0)}, screenHeight=${screenHeight}`);
                     this.returnObject(obj);
+                    removedCount++;
                 }
             } else {
                 // Object is inactive, return it to pool
+                console.log(`🗑️ Removing inactive object`);
                 this.returnObject(obj);
+                removedCount++;
             }
+        }
+        
+        if (removedCount > 0) {
+            console.log(`🧹 Pool cleanup: removed ${removedCount} objects, ${initialCount} -> ${this.activeObjects.length}`);
         }
     }
 

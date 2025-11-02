@@ -31,6 +31,10 @@ export class InformationObject {
         this.movementSpeed = movementSpeed;
         this.isActive = true;
         
+        // Movement direction (will be set based on spawn edge)
+        this.movementDirectionX = 0; // Horizontal movement direction
+        this.movementDirectionY = 1; // Vertical movement direction (default: downward)
+        
         // Content properties
         this.contentType = data.contentType;
         this.contentText = data.contentText;
@@ -175,8 +179,10 @@ export class InformationObject {
     update(deltaTime) {
         if (!this.isActive) return;
 
-        // Move toward bottom of screen
-        this.y += this.movementSpeed * (deltaTime / 16.67); // Normalize to 60fps
+        // Move based on direction (normalize to 60fps)
+        const normalizedDelta = deltaTime / 16.67;
+        this.x += this.movementSpeed * this.movementDirectionX * normalizedDelta;
+        this.y += this.movementSpeed * this.movementDirectionY * normalizedDelta;
 
         // Update flicker animation for corrupted objects
         if (this.flickerSpeed > 0) {
@@ -240,7 +246,7 @@ export class InformationObject {
         const words = this.contentText.split(' ');
         const lines = [];
         let currentLine = '';
-        const maxWidth = this.width - 20; // Same padding as in adjustDimensionsForText
+        const maxWidth = this.width - 12; // Same horizontal padding as in adjustDimensionsForText
 
         for (const word of words) {
             const testLine = currentLine + (currentLine ? ' ' : '') + word;
@@ -257,10 +263,10 @@ export class InformationObject {
             lines.push(currentLine);
         }
 
-        // Render lines with consistent spacing
-        const lineHeight = this.fontSize + 4;
-        const totalTextHeight = lines.length * lineHeight;
-        const startY = this.y + (this.height - totalTextHeight) / 2 + lineHeight / 2;
+        // Render lines with tight spacing to match dimension calculation
+        const lineHeight = this.fontSize + 2; // Same as in adjustDimensionsForText
+        const totalTextHeight = lines.length * lineHeight - 2; // Remove extra spacing from last line
+        const startY = this.y + (this.height - totalTextHeight) / 2 + this.fontSize / 2;
 
         lines.forEach((line, index) => {
             ctx.fillText(
@@ -349,12 +355,16 @@ export class InformationObject {
             maxLineWidth = Math.max(maxLineWidth, lineWidth);
         }
         
-        // Calculate dimensions based on actual text
-        const padding = 20; // Padding around text
-        const lineHeight = this.fontSize + 4;
+        // Calculate dimensions based on actual text with minimal padding
+        const horizontalPadding = 12; // Minimal horizontal padding
+        const verticalPadding = 8;    // Minimal vertical padding
+        const lineHeight = this.fontSize + 2; // Tighter line spacing
         
-        this.width = Math.max(150, maxLineWidth + padding); // Minimum width for clickability
-        this.height = Math.max(60, lines.length * lineHeight + padding); // Minimum height for clickability
+        // Calculate precise text height
+        const textHeight = lines.length * lineHeight - 2; // Remove extra spacing from last line
+        
+        this.width = Math.max(120, maxLineWidth + horizontalPadding); // Minimum width for clickability
+        this.height = Math.max(40, textHeight + verticalPadding); // Minimum height for clickability
         
         // Round to avoid sub-pixel rendering issues
         this.width = Math.round(this.width);
@@ -579,6 +589,16 @@ export class InformationObject {
      */
     setMovementSpeed(speed) {
         this.movementSpeed = Math.max(0, speed);
+    }
+
+    /**
+     * Sets the movement direction based on spawn edge
+     * @param {string} spawnEdge - The edge from which object was spawned (only 'top' is used)
+     */
+    setMovementDirection(spawnEdge) {
+        // All objects spawn from top and move straight down
+        this.movementDirectionX = 0;
+        this.movementDirectionY = 1; // Move downward
     }
 
     /**

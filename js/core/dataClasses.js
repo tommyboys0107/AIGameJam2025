@@ -59,7 +59,7 @@ export class PhaseSettings {
  * Configuration for object spawning behavior
  */
 export class SpawnSettings {
-    constructor(baseSpawnIntervalMin = 500, baseSpawnIntervalMax = 1000, maxConcurrentObjects = 15, movementSpeed = 2.0) {
+    constructor(baseSpawnIntervalMin = 1800, baseSpawnIntervalMax = 2800, maxConcurrentObjects = 8, movementSpeed = 2.0) {
         this.baseSpawnIntervalMin = baseSpawnIntervalMin;
         this.baseSpawnIntervalMax = baseSpawnIntervalMax;
         this.maxConcurrentObjects = maxConcurrentObjects;

@@ -17,31 +17,31 @@ export class DataStreamGenerator {
         this.phaseManager = phaseManager;
         this.settings = spawnSettings || new SpawnSettings();
         
-        // Object pool for efficient memory management
-        this.objectPool = new InformationObjectPool(this.settings.maxConcurrentObjects);
-        
-        // Spawn timing management
-        this.lastSpawnTime = 0;
-        this.nextSpawnInterval = this.getRandomSpawnInterval();
-        
-        // Difficulty scaling
+        // Initialize all properties first
         this.difficultyMultiplier = 1.0;
         this.currentMovementSpeed = this.settings.movementSpeed;
+        this.baseCorruptionProbability = 0.3; // 30% base chance
+        this.maxCorruptionProbability = 0.7;  // 70% max chance at high difficulty
         
         // Screen dimensions for spawn positioning
         this.screenWidth = 1200;  // Updated default for larger canvas
         this.screenHeight = 900; // Updated default for larger canvas
         
-        // Spawn position management
-        this.spawnPositions = this.calculateSpawnPositions();
-        
         // State management
         this.isActive = false;
         this.isPaused = false;
         
-        // Content assignment configuration
-        this.baseCorruptionProbability = 0.3; // 30% base chance
-        this.maxCorruptionProbability = 0.7;  // 70% max chance at high difficulty
+        // Object pool for efficient memory management - force to 8 objects
+        const maxObjects = 8;
+        this.objectPool = new InformationObjectPool(maxObjects);
+        console.log(`🔧 Forced pool size to ${maxObjects}, settings had: ${this.settings.maxConcurrentObjects}`);
+        
+        // Spawn timing management (after all properties are initialized)
+        this.lastSpawnTime = 0;
+        this.nextSpawnInterval = this.getRandomSpawnInterval();
+        
+        // Spawn position management
+        this.spawnPositions = this.calculateSpawnPositions();
         
         // Statistics
         this.totalObjectsSpawned = 0;
@@ -73,36 +73,29 @@ export class DataStreamGenerator {
      */
     calculateSpawnPositions() {
         const positions = [];
-        const objectWidth = 280; // Much larger object width for full-screen
-        const objectHeight = 140; // Much larger object height for full-screen
-        const margin = 20; // Margin from screen edge
+        const margin = 50; // Margin from screen edges
+        const maxObjectWidth = 600; // Maximum possible object width
         
-        // Top edge positions
-        for (let x = margin; x < this.screenWidth - objectWidth - margin; x += objectWidth + 10) {
+        // Only top edge positions - spread across entire screen width
+        const numTopPositions = 5; // Reduce to 5 positions for better spacing
+        const availableWidth = this.screenWidth - (2 * margin) - maxObjectWidth; // Account for object width
+        const topSpacing = Math.max(250, availableWidth / Math.max(1, numTopPositions - 1)); // Minimum 250px spacing
+        
+        for (let i = 0; i < numTopPositions; i++) {
+            const x = margin + (i * topSpacing);
+            // Ensure the rightmost edge of the object doesn't exceed screen bounds
+            const clampedX = Math.min(x, this.screenWidth - margin - maxObjectWidth);
+            
             positions.push({
-                x: x,
-                y: -objectHeight - margin,
+                x: clampedX,
+                y: -150, // Start well above screen
                 edge: 'top'
             });
         }
         
-        // Left edge positions
-        for (let y = margin; y < this.screenHeight - objectHeight - margin; y += objectHeight + 10) {
-            positions.push({
-                x: -objectWidth - margin,
-                y: y,
-                edge: 'left'
-            });
-        }
-        
-        // Right edge positions
-        for (let y = margin; y < this.screenHeight - objectHeight - margin; y += objectHeight + 10) {
-            positions.push({
-                x: this.screenWidth + margin,
-                y: y,
-                edge: 'right'
-            });
-        }
+        console.log(`Generated ${positions.length} spawn positions (screen: ${this.screenWidth}x${this.screenHeight})`);
+        console.log(`Available width: ${availableWidth}px, spacing: ${topSpacing.toFixed(1)}px`);
+        console.log(`Positions: ${positions.map(p => p.x.toFixed(0)).join(', ')}`);
         
         return positions;
     }
@@ -111,12 +104,25 @@ export class DataStreamGenerator {
      * Starts the data stream generation
      */
     start() {
-        console.log('DataStreamGenerator started');
+        console.log('🚀 DataStreamGenerator started');
         this.isActive = true;
         this.isPaused = false;
         this.lastSpawnTime = Date.now();
         this.nextSpawnInterval = this.getRandomSpawnInterval();
         this.objectsSpawnedThisPhase = 0;
+        
+        console.log(`📋 Generator settings:`, {
+            isActive: this.isActive,
+            isPaused: this.isPaused,
+            maxConcurrentObjects: this.settings.maxConcurrentObjects,
+            baseSpawnIntervalMin: this.settings.baseSpawnIntervalMin,
+            baseSpawnIntervalMax: this.settings.baseSpawnIntervalMax,
+            nextSpawnInterval: this.nextSpawnInterval,
+            spawnPositions: this.spawnPositions.length
+        });
+        
+        console.log(`🔧 Settings object:`, this.settings);
+        console.log(`🔧 GAME_CONSTANTS.MAX_CONCURRENT_OBJECTS:`, GAME_CONSTANTS.MAX_CONCURRENT_OBJECTS);
     }
 
     /**
@@ -171,18 +177,29 @@ export class DataStreamGenerator {
             return;
         }
 
+        const currentTime = Date.now();
+
         // Check for objects that reached the bottom before updating
         this.checkObjectsReachedBottom();
 
         // Update object pool
         this.objectPool.updateActiveObjects(deltaTime, this.screenHeight);
+        
+        // Force cleanup of inactive objects every few seconds
+        if (!this.lastCleanupTime) this.lastCleanupTime = 0;
+        if (currentTime - this.lastCleanupTime > 3000) { // Every 3 seconds
+            this.forceCleanupInactiveObjects();
+            this.lastCleanupTime = currentTime;
+        }
 
         // Check if it's time to spawn a new object
-        const currentTime = Date.now();
-        if (currentTime - this.lastSpawnTime >= this.nextSpawnInterval) {
+        const timeSinceLastSpawn = currentTime - this.lastSpawnTime;
+        if (timeSinceLastSpawn >= this.nextSpawnInterval) {
+            console.log(`⏰ Time to spawn: ${timeSinceLastSpawn}ms >= ${this.nextSpawnInterval}ms`);
             this.spawnObject();
             this.lastSpawnTime = currentTime;
             this.nextSpawnInterval = this.getRandomSpawnInterval();
+            console.log(`⏰ Next spawn in: ${this.nextSpawnInterval}ms`);
         }
     }
 
@@ -210,6 +227,10 @@ export class DataStreamGenerator {
                 this.onObjectProcessed(wasBlocked, obj.isCorrupted);
                 console.log(`Object processed (reached bottom): corrupted=${obj.isCorrupted}, blocked=${wasBlocked}`);
             }
+            
+            // Ensure the object is properly deactivated
+            obj.isActive = false;
+            console.log(`Object deactivated after reaching bottom`);
         }
     }
 
@@ -230,11 +251,25 @@ export class DataStreamGenerator {
      * @private
      */
     spawnObject() {
+        console.log('🎯 spawnObject() called');
+        
         // Check if we've reached the maximum concurrent objects
-        if (this.objectPool.getActiveObjectCount() >= this.settings.maxConcurrentObjects) {
-            console.log('Maximum concurrent objects reached, skipping spawn');
+        const currentActiveCount = this.objectPool.getActiveObjectCount();
+        const maxAllowed = 8; // Force to 8 objects
+        
+        console.log(`📊 Current active objects: ${currentActiveCount}/${maxAllowed}`);
+        
+        // Debug: Show details about active objects
+        const allActiveObjects = this.objectPool.activeObjects;
+        const reallyActiveObjects = allActiveObjects.filter(obj => obj.isObjectActive());
+        console.log(`🔍 Debug: activeObjects.length=${allActiveObjects.length}, reallyActive=${reallyActiveObjects.length}`);
+        
+        if (currentActiveCount >= maxAllowed) {
+            console.log(`❌ Maximum concurrent objects reached: ${currentActiveCount}/${maxAllowed}, skipping spawn`);
             return;
         }
+        
+        console.log(`✅ Proceeding with spawn: ${currentActiveCount}/${maxAllowed} active objects`);
 
         // Get content from content provider (will be implemented in subtask 5.2)
         const contentData = this.getContentForSpawn();
@@ -259,6 +294,9 @@ export class DataStreamGenerator {
         );
 
         if (obj) {
+            // Set movement direction based on spawn edge
+            obj.setMovementDirection(spawnPos.edge);
+            
             this.totalObjectsSpawned++;
             this.objectsSpawnedThisPhase++;
             
@@ -341,7 +379,7 @@ export class DataStreamGenerator {
     }
 
     /**
-     * Gets a random spawn position from available positions
+     * Gets a random spawn position from available positions, avoiding overlaps
      * @returns {Object|null} Spawn position object or null if none available
      * @private
      */
@@ -350,6 +388,70 @@ export class DataStreamGenerator {
             return null;
         }
 
+        const activeObjects = this.objectPool.getActiveObjects();
+        const maxAttempts = 15; // Increase attempts to find non-overlapping position
+        
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+            const candidatePos = this.spawnPositions[Math.floor(Math.random() * this.spawnPositions.length)];
+            
+            // Check if this position would overlap with existing objects
+            let hasOverlap = false;
+            const minHorizontalDistance = 200; // Larger horizontal distance
+            const minVerticalDistance = 150;   // Minimum vertical distance
+            
+            for (const obj of activeObjects) {
+                const horizontalDistance = Math.abs(candidatePos.x - obj.x);
+                const verticalDistance = Math.abs(candidatePos.y - obj.y);
+                
+                // Check both horizontal and vertical distances
+                if (horizontalDistance < minHorizontalDistance && verticalDistance < minVerticalDistance) {
+                    hasOverlap = true;
+                    break;
+                }
+                
+                // Also check if objects are too close in the spawn area (top of screen)
+                if (obj.y < 100 && verticalDistance < 200) { // If object is near top
+                    if (horizontalDistance < minHorizontalDistance) {
+                        hasOverlap = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (!hasOverlap) {
+                console.log(`✅ Found non-overlapping position at (${candidatePos.x.toFixed(0)}, ${candidatePos.y}) after ${attempt + 1} attempts`);
+                return candidatePos;
+            }
+        }
+        
+        // If we couldn't find a non-overlapping position, try to find the least crowded area
+        let bestPosition = null;
+        let maxMinDistance = 0;
+        
+        for (const candidatePos of this.spawnPositions) {
+            let minDistanceToAnyObject = Infinity;
+            
+            for (const obj of activeObjects) {
+                const distance = Math.sqrt(
+                    Math.pow(candidatePos.x - obj.x, 2) + 
+                    Math.pow(candidatePos.y - obj.y, 2)
+                );
+                minDistanceToAnyObject = Math.min(minDistanceToAnyObject, distance);
+            }
+            
+            if (minDistanceToAnyObject > maxMinDistance) {
+                maxMinDistance = minDistanceToAnyObject;
+                bestPosition = candidatePos;
+            }
+        }
+        
+        if (bestPosition) {
+            console.warn(`⚠️ Using least crowded position at (${bestPosition.x.toFixed(0)}, ${bestPosition.y}) with distance ${maxMinDistance.toFixed(0)}`);
+            return bestPosition;
+        }
+        
+        // Last resort: use random position
+        console.warn('❌ Could not find any good spawn position, using random position');
         return this.spawnPositions[Math.floor(Math.random() * this.spawnPositions.length)];
     }
 
@@ -367,10 +469,12 @@ export class DataStreamGenerator {
         const scaledMax = baseMax / this.difficultyMultiplier;
         
         // Ensure minimum interval doesn't go below reasonable limits
-        const minInterval = Math.max(scaledMin, 100); // Minimum 100ms (faster spawning)
-        const maxInterval = Math.max(scaledMax, minInterval + 50);
+        const minInterval = Math.max(scaledMin, 1000); // Minimum 1 second
+        const maxInterval = Math.max(scaledMax, minInterval + 300); // At least 0.3s difference
         
-        return Math.random() * (maxInterval - minInterval) + minInterval;
+        const interval = Math.random() * (maxInterval - minInterval) + minInterval;
+        console.log(`⏱️ Spawn interval calculated: ${interval.toFixed(0)}ms (range: ${minInterval.toFixed(0)}-${maxInterval.toFixed(0)}ms, difficulty: ${this.difficultyMultiplier || 1})`);
+        return interval;
     }
 
     /**
@@ -378,7 +482,7 @@ export class DataStreamGenerator {
      * @param {number} multiplier - New difficulty multiplier
      */
     updateDifficulty(multiplier) {
-        console.log(`DataStreamGenerator difficulty updated: ${this.difficultyMultiplier.toFixed(2)} -> ${multiplier.toFixed(2)}`);
+        console.log(`DataStreamGenerator difficulty updated: ${this.difficultyMultiplier || 1} -> ${multiplier || 1}`);
         
         this.difficultyMultiplier = multiplier;
         
@@ -417,7 +521,7 @@ export class DataStreamGenerator {
         this.baseCorruptionProbability = Math.max(0, Math.min(1, baseProbability));
         this.maxCorruptionProbability = Math.max(this.baseCorruptionProbability, Math.min(1, maxProbability));
         
-        console.log(`Corruption probability range set: ${this.baseCorruptionProbability.toFixed(2)} - ${this.maxCorruptionProbability.toFixed(2)}`);
+        console.log(`Corruption probability range set: ${this.baseCorruptionProbability || 0} - ${this.maxCorruptionProbability || 0}`);
     }
 
     /**
@@ -445,6 +549,10 @@ export class DataStreamGenerator {
             clickedObject.hasBeenProcessed = true; // Mark to prevent double processing
             this.onObjectProcessed(wasBlocked, clickedObject.isCorrupted);
             console.log(`Object processed (clicked): corrupted=${clickedObject.isCorrupted}, blocked=${wasBlocked}`);
+            
+            // Ensure the object is properly deactivated
+            clickedObject.isActive = false;
+            console.log(`Object deactivated after being clicked`);
         }
         
         return clickedObject;
@@ -578,6 +686,28 @@ export class DataStreamGenerator {
     clearAllObjects() {
         this.objectPool.clearAllObjects();
         console.log('All objects cleared from DataStreamGenerator');
+    }
+
+    /**
+     * Forces cleanup of inactive objects from the active list
+     * @private
+     */
+    forceCleanupInactiveObjects() {
+        const beforeCount = this.objectPool.getActiveObjectCount();
+        const activeObjects = this.objectPool.activeObjects;
+        
+        // Remove inactive objects from active list
+        for (let i = activeObjects.length - 1; i >= 0; i--) {
+            const obj = activeObjects[i];
+            if (!obj.isObjectActive()) {
+                this.objectPool.returnObject(obj);
+            }
+        }
+        
+        const afterCount = this.objectPool.getActiveObjectCount();
+        if (beforeCount !== afterCount) {
+            console.log(`Forced cleanup: removed ${beforeCount - afterCount} inactive objects`);
+        }
     }
 
     /**
