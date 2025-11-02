@@ -1,0 +1,53 @@
+/* Human Firewall - Main Styles */
+
+/* Reset and base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Courier New', monospace;
+    background-color: #000000;
+    color: #00FF41;
+    overflow: hidden;
+}
+
+/* Game container */
+#game-container {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+}
+
+/* Screen management */
+.screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.screen.hidden {
+    display: none;
+}
+
+/* Game canvas */
+#game-canvas {
+    border: 1px solid #00FF41;
+    background-color: #000000;
+}
+
+/* Basic styling - detailed styles will be added in UI tasks */
+h1 {
+    color: #00BFFF;
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 10px #00BFFF;
+}

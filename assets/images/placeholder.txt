@@ -1,0 +1,2 @@
+This directory will contain game images and visual assets.
+Images will be added in later implementation tasks.

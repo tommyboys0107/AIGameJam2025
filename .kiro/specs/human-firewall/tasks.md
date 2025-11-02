@@ -1,6 +1,6 @@
 # Implementation Plan
 
-- [ ] 1. Set up project structure and core web files
+- [x] 1. Set up project structure and core web files
   - Create HTML file structure (index.html, css/, js/, assets/)
   - Create main JavaScript modules (js/core/, js/ui/, js/content/, js/managers/)
   - Implement core constants and enums (GamePhase, ContentType, GameEndType)

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Human Firewall</title>
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+    <div id="game-container">
+        <!-- Main menu will be implemented in later tasks -->
+        <div id="main-menu" class="screen">
+            <h1>Human Firewall</h1>
+            <p>Activating...</p>
+        </div>
+
+        <!-- Game canvas and HUD will be implemented in later tasks -->
+        <div id="game-screen" class="screen hidden">
+            <canvas id="game-canvas"></canvas>
+            <div id="hud">
+                <!-- HUD elements will be added in later tasks -->
+            </div>
+        </div>
+
+        <!-- Game over overlay will be implemented in later tasks -->
+        <div id="game-over" class="screen hidden">
+            <div id="game-over-content">
+                <!-- Game over content will be added in later tasks -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Core modules -->
+    <script type="module" src="js/core/constants.js"></script>
+    <script type="module" src="js/core/dataClasses.js"></script>
+    
+    <!-- Manager modules -->
+    <script type="module" src="js/managers/GameManager.js"></script>
+    <script type="module" src="js/managers/PhaseManager.js"></script>
+    
+    <!-- UI modules -->
+    <script type="module" src="js/ui/UIManager.js"></script>
+    
+    <!-- Content modules -->
+    <script type="module" src="js/content/ContentProvider.js"></script>
+
+    <!-- Main game initialization will be added in later tasks -->
+    <script type="module">
+        // Game initialization will be implemented in later tasks
+        console.log('Human Firewall - Project structure initialized');
+    </script>
+</body>
+</html>
