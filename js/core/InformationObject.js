@@ -33,12 +33,12 @@ export class InformationObject {
         // Visual properties
         this.fontSize = 24;  // Much larger font size for full-screen readability
         this.fontFamily = 'Courier New, monospace';
-        this.borderColor = this.isCorrupted ? '#FF4444' : '#00FF41';
+        this.borderColor = '#00BFFF'; // Neutral cyan border for all objects
         this.backgroundColor = 'rgba(0, 0, 0, 0.8)';
         
         // Animation properties for corruption effects
         this.flickerTimer = 0;
-        this.flickerSpeed = this.isCorrupted ? 0.1 : 0;
+        this.flickerSpeed = 0; // Remove flicker effect to avoid visual hints
         
         // Image loading state (for image content)
         this.imageLoaded = false;
@@ -125,8 +125,9 @@ export class InformationObject {
             case ContentType.IMAGE:
                 this.renderImage(ctx);
                 break;
-            case ContentType.CODE:
-                this.renderCode(ctx);
+            default:
+                // Fallback to text rendering for unknown types
+                this.renderText(ctx);
                 break;
         }
 
@@ -212,49 +213,7 @@ export class InformationObject {
         }
     }
 
-    /**
-     * Renders code content with syntax highlighting
-     * @param {CanvasRenderingContext2D} ctx - Canvas rendering context
-     * @private
-     */
-    renderCode(ctx) {
-        ctx.fillStyle = this.displayColor;
-        ctx.font = `${this.fontSize - 4}px ${this.fontFamily}`; // Slightly smaller for code but still readable
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
 
-        // Simple syntax highlighting for code
-        const lines = this.contentText.split('\n');
-        const lineHeight = this.fontSize + 2; // Increased line height for better readability
-        const padding = 10; // Increased padding for larger objects
-
-        lines.forEach((line, index) => {
-            const y = this.y + padding + index * lineHeight;
-            
-            // Basic syntax highlighting
-            if (line.includes('function') || line.includes('class') || line.includes('const') || line.includes('let')) {
-                ctx.fillStyle = '#569CD6'; // Blue for keywords
-            } else if (line.includes('//') || line.includes('/*')) {
-                ctx.fillStyle = '#6A9955'; // Green for comments
-            } else if (line.includes('"') || line.includes("'")) {
-                ctx.fillStyle = '#CE9178'; // Orange for strings
-            } else {
-                ctx.fillStyle = this.displayColor;
-            }
-
-            // Truncate line if too long
-            let displayLine = line;
-            const maxWidth = this.width - padding * 2;
-            while (ctx.measureText(displayLine).width > maxWidth && displayLine.length > 0) {
-                displayLine = displayLine.slice(0, -1);
-            }
-            if (displayLine !== line && displayLine.length > 3) {
-                displayLine = displayLine.slice(0, -3) + '...';
-            }
-
-            ctx.fillText(displayLine, this.x + padding, y);
-        });
-    }
 
     /**
      * Checks if a mouse click hits this object

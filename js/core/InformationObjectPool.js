@@ -102,9 +102,9 @@ export class InformationObjectPool {
         obj.corruptionSeverity = data.corruptionSeverity;
         obj.displayColor = data.displayColor;
 
-        // Update visual properties based on corruption
-        obj.borderColor = data.isCorrupted ? '#FF4444' : '#00FF41';
-        obj.flickerSpeed = data.isCorrupted ? 0.1 : 0;
+        // Update visual properties - use neutral color for all objects
+        obj.borderColor = '#00BFFF'; // Neutral cyan border for all objects
+        obj.flickerSpeed = 0; // Remove flicker effect to avoid visual hints
         obj.flickerTimer = 0;
 
         // Reset image loading state

@@ -27,7 +27,7 @@ export class UIManager {
         
         // Set initial HUD state
         this.updateSystemStatus('OPERATIONAL');
-        this.updatePhase(GamePhase.CODE);
+        this.updatePhase(GamePhase.TEXT);
         this.updatePhaseTimer(15);
         this.updateCorruptionMeter(0);
     }
@@ -64,14 +64,14 @@ export class UIManager {
         if (this.hudElements.currentPhase) {
             let phaseText = '';
             switch (phase) {
-                case GamePhase.CODE:
-                    phaseText = 'CODE';
+                case GamePhase.TEXT:
+                    phaseText = 'TEXT';
                     break;
                 case GamePhase.ART:
                     phaseText = 'ART';
                     break;
-                case GamePhase.TEXT:
-                    phaseText = 'TEXT';
+                default:
+                    phaseText = 'TEXT'; // Default to TEXT if unknown phase
                     break;
             }
             this.hudElements.currentPhase.textContent = phaseText;

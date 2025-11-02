@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neutral Visual Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            color: #00FF41;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+        }
+        
+        #test-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            cursor: crosshair;
+        }
+        
+        #controls {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border: 1px solid #00FF41;
+            z-index: 100;
+        }
+        
+        button {
+            background: #00BFFF;
+            color: black;
+            border: none;
+            padding: 8px 15px;
+            margin: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+        }
+        
+        button:hover {
+            background: #00FF41;
+        }
+        
+        #info {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            border: 1px solid #00FF41;
+            z-index: 100;
+            font-size: 12px;
+        }
+        
+        .object-info {
+            margin: 5px 0;
+            padding: 5px;
+            border: 1px solid #333;
+        }
+        
+        .corrupted {
+            background: rgba(255, 68, 68, 0.1);
+        }
+        
+        .legitimate {
+            background: rgba(0, 255, 65, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="test-canvas"></canvas>
+    
+    <div id="controls">
+        <div>Neutral Visual Test</div>
+        <button onclick="spawnCorruptedText()">Spawn Corrupted Text</button>
+        <button onclick="spawnLegitimateText()">Spawn Legitimate Text</button>
+        <button onclick="spawnCorruptedImage()">Spawn Corrupted Image</button>
+        <button onclick="spawnLegitimateImage()">Spawn Legitimate Image</button>
+        <button onclick="clearObjects()">Clear All</button>
+    </div>
+    
+    <div id="info">
+        <div>所有物件現在都使用相同的青色 (#00BFFF)</div>
+        <div>無閃爍效果，無顏色區分</div>
+        <div>點擊物件查看詳細資訊</div>
+        <div id="object-list">
+            <div><strong>Active Objects:</strong></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { ContentProvider } from './js/content/ContentProvider.js';
+        import { InformationObjectPool } from './js/core/InformationObjectPool.js';
+        import { GamePhase, ContentType } from './js/core/constants.js';
+        
+        const canvas = document.getElementById('test-canvas');
+        const ctx = canvas.getContext('2d');
+        const objectListDiv = document.getElementById('object-list');
+        
+        let contentProvider;
+        let objectPool;
+        let objects = [];
+        let animationId;
+        
+        function setupCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        
+        function animate(currentTime) {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw background grid
+            ctx.strokeStyle = '#00FF41';
+            ctx.lineWidth = 1;
+            ctx.globalAlpha = 0.1;
+            
+            for (let x = 0; x < canvas.width; x += 50) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            
+            for (let y = 0; y < canvas.height; y += 50) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+            
+            ctx.globalAlpha = 1;
+            
+            // Update and render objects
+            for (const obj of objects) {
+                if (obj.isObjectActive()) {
+                    obj.update(16.67); // ~60fps
+                    obj.render(ctx);
+                }
+            }
+            
+            // Update object list
+            updateObjectList();
+            
+            animationId = requestAnimationFrame(animate);
+        }
+        
+        function updateObjectList() {
+            const activeObjects = objects.filter(obj => obj.isObjectActive());
+            
+            objectListDiv.innerHTML = `
+                <div><strong>Active Objects (${activeObjects.length}):</strong></div>
+                ${activeObjects.map((obj, index) => `
+                    <div class="object-info ${obj.isCorrupted ? 'corrupted' : 'legitimate'}">
+                        Object ${index + 1}: ${obj.contentType.toUpperCase()} - 
+                        ${obj.isCorrupted ? 'CORRUPTED' : 'LEGITIMATE'} - 
+                        Color: ${obj.displayColor} - 
+                        Border: ${obj.borderColor} - 
+                        Flicker: ${obj.flickerSpeed}
+                    </div>
+                `).join('')}
+            `;
+        }
+        
+        async function init() {
+            setupCanvas();
+            
+            // Initialize content provider
+            contentProvider = new ContentProvider();
+            try {
+                await contentProvider.loadContent();
+                console.log('Content loaded successfully');
+            } catch (error) {
+                console.warn('Failed to load content, using fallback');
+                contentProvider.setupFallbackContent();
+            }
+            
+            // Initialize object pool
+            objectPool = new InformationObjectPool(20);
+            
+            // Add click listener
+            canvas.addEventListener('click', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                // Check if any object was clicked
+                for (const obj of objects) {
+                    if (obj.isClicked && obj.isClicked(x, y)) {
+                        console.log('Clicked object:', {
+                            type: obj.contentType,
+                            corrupted: obj.isCorrupted,
+                            text: obj.contentText,
+                            displayColor: obj.displayColor,
+                            borderColor: obj.borderColor,
+                            flickerSpeed: obj.flickerSpeed
+                        });
+                        break;
+                    }
+                }
+            });
+            
+            // Start animation
+            animate(performance.now());
+        }
+        
+        function spawnObject(phase, isCorrupted) {
+            const content = contentProvider.getRandomContent(phase, isCorrupted);
+            const x = Math.random() * (canvas.width - 200) + 100;
+            const y = Math.random() * (canvas.height - 100) + 50;
+            
+            const obj = objectPool.getObject(content, x, y, 0); // No movement for testing
+            if (obj) {
+                objects.push(obj);
+                console.log('Spawned object:', {
+                    type: obj.contentType,
+                    corrupted: obj.isCorrupted,
+                    displayColor: obj.displayColor,
+                    borderColor: obj.borderColor,
+                    flickerSpeed: obj.flickerSpeed
+                });
+            }
+        }
+        
+        // Global functions
+        window.spawnCorruptedText = () => spawnObject(GamePhase.TEXT, true);
+        window.spawnLegitimateText = () => spawnObject(GamePhase.TEXT, false);
+        window.spawnCorruptedImage = () => spawnObject(GamePhase.ART, true);
+        window.spawnLegitimateImage = () => spawnObject(GamePhase.ART, false);
+        
+        window.clearObjects = function() {
+            for (const obj of objects) {
+                objectPool.returnObject(obj);
+            }
+            objects = [];
+        };
+        
+        // Handle window resize
+        window.addEventListener('resize', setupCanvas);
+        
+        // Initialize when page loads
+        init();
+    </script>
+</body>
+</html>
+</content>
+</invoke>

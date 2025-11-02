@@ -8,7 +8,6 @@ export class ContentProvider {
     constructor() {
         this.textContent = null;
         this.imageContent = null;
-        this.codeContent = null;
         this.isLoaded = false;
     }
 
@@ -27,16 +26,14 @@ export class ContentProvider {
     async loadContentConfigurations() {
         try {
             // Load all content configuration files in parallel
-            const [textResponse, imageResponse, codeResponse] = await Promise.all([
+            const [textResponse, imageResponse] = await Promise.all([
                 fetch('data/textContent.json'),
-                fetch('data/imageContent.json'),
-                fetch('data/codeContent.json')
+                fetch('data/imageContent.json')
             ]);
 
             // Parse JSON responses
             this.textContent = await textResponse.json();
             this.imageContent = await imageResponse.json();
-            this.codeContent = await codeResponse.json();
 
             // Validate loaded content
             this.validateContent();
@@ -56,8 +53,7 @@ export class ContentProvider {
     validateContent() {
         const requiredArrays = [
             { content: this.textContent, name: 'textContent' },
-            { content: this.imageContent, name: 'imageContent' },
-            { content: this.codeContent, name: 'codeContent' }
+            { content: this.imageContent, name: 'imageContent' }
         ];
 
         for (const { content, name } of requiredArrays) {
@@ -87,10 +83,7 @@ export class ContentProvider {
             corrupted: ['assets/images/error.png']
         };
 
-        this.codeContent = {
-            legitimate: ['function test() { return true; }'],
-            corrupted: ['function test() { return true }']
-        };
+
 
         this.isLoaded = true;
     }
@@ -126,12 +119,6 @@ export class ContentProvider {
                 contentImage = this.getRandomFromArray(contentArray);
                 break;
             
-            case GamePhase.CODE:
-                contentType = ContentType.CODE;
-                contentArray = isCorrupted ? this.codeContent.corrupted : this.codeContent.legitimate;
-                contentText = this.getRandomFromArray(contentArray);
-                break;
-            
             default:
                 console.warn(`Unknown phase: ${phase}, defaulting to TEXT`);
                 contentType = ContentType.TEXT;
@@ -139,8 +126,8 @@ export class ContentProvider {
                 contentText = this.getRandomFromArray(contentArray);
         }
 
-        // Determine display color based on corruption status
-        const displayColor = isCorrupted ? '#FF4444' : '#00FF41';
+        // Use neutral color for all content to avoid visual hints
+        const displayColor = '#00BFFF'; // Cyan color for all content
 
         return new InformationObjectData(
             contentType,
@@ -193,17 +180,13 @@ export class ContentProvider {
                 contentImage = this.getRandomFromArray(contentArray);
                 break;
             
-            case ContentType.CODE:
-                contentArray = isCorrupted ? this.codeContent.corrupted : this.codeContent.legitimate;
-                contentText = this.getRandomFromArray(contentArray);
-                break;
-            
             default:
                 console.warn(`Unknown content type: ${contentType}`);
                 return null;
         }
 
-        const displayColor = isCorrupted ? '#FF4444' : '#00FF41';
+        // Use neutral color for all content to avoid visual hints
+        const displayColor = '#00BFFF'; // Cyan color for all content
 
         return new InformationObjectData(
             contentType,
@@ -241,9 +224,6 @@ export class ContentProvider {
                 break;
             case ContentType.IMAGE:
                 contentArray = isCorrupted ? this.imageContent.corrupted : this.imageContent.legitimate;
-                break;
-            case ContentType.CODE:
-                contentArray = isCorrupted ? this.codeContent.corrupted : this.codeContent.legitimate;
                 break;
             default:
                 return 0;

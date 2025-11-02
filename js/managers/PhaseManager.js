@@ -8,7 +8,7 @@ export class PhaseManager {
         this.settings = settings || new PhaseSettings();
         
         // Current phase state
-        this.currentPhase = GamePhase.CODE;
+        this.currentPhase = GamePhase.TEXT;
         this.phaseStartTime = 0;
         this.phaseNumber = 0;
         this.difficultyMultiplier = 1.0;
@@ -20,7 +20,7 @@ export class PhaseManager {
         this.totalPausedDuration = 0;
         
         // Phase cycle order
-        this.phaseOrder = [GamePhase.CODE, GamePhase.ART, GamePhase.TEXT];
+        this.phaseOrder = [GamePhase.TEXT, GamePhase.ART];
         this.currentPhaseIndex = 0;
         
         // Event callbacks

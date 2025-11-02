@@ -2,16 +2,14 @@
 
 // Game phases enum
 export const GamePhase = {
-    CODE: 'code',
-    ART: 'art', 
-    TEXT: 'text'
+    TEXT: 'text',
+    ART: 'art'
 };
 
 // Content types enum
 export const ContentType = {
     TEXT: 'text',
-    IMAGE: 'image',
-    CODE: 'code'
+    IMAGE: 'image'
 };
 
 // Game end types enum
