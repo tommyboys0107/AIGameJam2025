@@ -21,15 +21,15 @@
     - Implement content validation and fallback handling
     - _Requirements: 1.1, 1.2, 3.1_
 
-- [ ] 3. Implement core game objects and mechanics
-  - [ ] 3.1 Create InformationObject class
+- [x] 3. Implement core game objects and mechanics
+  - [x] 3.1 Create InformationObject class
     - Implement InformationObject JavaScript class with position and collision properties
     - Add content rendering methods for canvas drawing (text, images, and code)
     - Implement mouse click detection and blocking functionality
     - Add movement behavior toward screen bottom using requestAnimationFrame
     - _Requirements: 1.1, 1.4_
 
-  - [ ] 3.2 Create object pooling system
+  - [x] 3.2 Create object pooling system
     - Implement InformationObjectPool for efficient object management
     - Add pool initialization, object retrieval, and return functionality
     - Configure pool size based on maximum concurrent objects setting
