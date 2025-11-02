@@ -509,13 +509,15 @@ export class GameManager {
                 // Not critical, continue
             }
             
-            // Initialize audio context (requires user interaction)
+            // Initialize audio context and start BGM (requires user interaction)
             try {
                 if (this.audioManager && typeof this.audioManager.resumeAudioContext === 'function') {
                     await this.audioManager.resumeAudioContext();
+                    // Start background music
+                    await this.audioManager.startBGM();
                 }
             } catch (audioError) {
-                console.warn('Failed to initialize audio context:', audioError);
+                console.warn('Failed to initialize audio context or start BGM:', audioError);
             }
             
             // Set game state and timing
@@ -636,6 +638,10 @@ export class GameManager {
             if (this.inputHandler && typeof this.inputHandler.disable === 'function') {
                 this.inputHandler.disable();
             }
+            // Stop BGM when game ends
+            if (this.audioManager && typeof this.audioManager.stopBGM === 'function') {
+                this.audioManager.stopBGM();
+            }
         } catch (error) {
             console.error('Error stopping subsystems:', error);
         }
@@ -713,6 +719,13 @@ export class GameManager {
         
         // Show menu UI
         this.uiManager.showMenuUI();
+        
+        // Restart BGM for menu if it was stopped
+        if (this.audioManager && typeof this.audioManager.startBGM === 'function') {
+            this.audioManager.startBGM().catch(error => {
+                console.warn('Failed to restart BGM in menu:', error);
+            });
+        }
         
         console.log('Reset to menu complete');
     }

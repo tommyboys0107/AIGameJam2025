@@ -465,7 +465,7 @@
                 startButton.style.pointerEvents = 'auto';
                 startButton.style.cursor = 'pointer';
                 
-                startButton.addEventListener('click', (event) => {
+                startButton.addEventListener('click', async (event) => {
                     event.preventDefault();
                     console.log('Start button clicked!');
                     
@@ -484,7 +484,28 @@
                         
                         // Initialize game systems if not already done
                         if (!gameSystemsInitialized) {
-                            setTimeout(initializeGameSystems, 100);
+                            setTimeout(async () => {
+                                await initializeGameSystems();
+                                // Start BGM after systems are initialized
+                                if (gameManager && gameManager.audioManager) {
+                                    try {
+                                        await gameManager.audioManager.startBGM();
+                                        console.log('BGM started from main menu');
+                                    } catch (error) {
+                                        console.warn('Failed to start BGM from main menu:', error);
+                                    }
+                                }
+                            }, 100);
+                        } else {
+                            // Systems already initialized, just start BGM
+                            if (gameManager && gameManager.audioManager) {
+                                try {
+                                    await gameManager.audioManager.startBGM();
+                                    console.log('BGM started from main menu (systems already initialized)');
+                                } catch (error) {
+                                    console.warn('Failed to start BGM from main menu:', error);
+                                }
+                            }
                         }
                     } else {
                         console.error('Missing screen elements!');

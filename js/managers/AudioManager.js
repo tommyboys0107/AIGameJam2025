@@ -5,10 +5,15 @@ export class AudioManager {
     constructor() {
         this.audioContext = null;
         this.isEnabled = true;
-        this.masterVolume = 0.3; // Default volume (30%)
+        this.masterVolume = 0.5; // Default volume (50%) - increased for better sound effects
+        this.bgmVolume = 0.2; // BGM volume (20%) - kept the same
         
         // Audio buffers for different sound types
         this.soundBuffers = new Map();
+        
+        // Background music
+        this.bgmAudio = null;
+        this.bgmLoaded = false;
         
         // Sound configuration
         this.soundConfig = {
@@ -16,53 +21,53 @@ export class AudioManager {
                 frequency: 800,
                 duration: 0.1,
                 type: 'sine',
-                volume: 0.4
+                volume: 0.7
             },
             clickFail: {
                 frequency: 200,
                 duration: 0.2,
                 type: 'sawtooth',
-                volume: 0.3
+                volume: 0.5
             },
             clickMiss: {
                 frequency: 400,
                 duration: 0.05,
                 type: 'square',
-                volume: 0.2
+                volume: 0.4
             },
             phaseChange: {
                 frequency: 600,
                 duration: 0.3,
                 type: 'sine',
-                volume: 0.5,
+                volume: 0.8,
                 modulation: true
             },
             gameOver: {
                 frequency: 150,
                 duration: 1.0,
                 type: 'sawtooth',
-                volume: 0.6,
+                volume: 0.9,
                 fadeOut: true
             },
             gameSuccess: {
                 frequency: 1000,
                 duration: 0.8,
                 type: 'sine',
-                volume: 0.5,
+                volume: 0.8,
                 chord: [1.0, 1.25, 1.5] // Major chord ratios
             },
             corruption: {
                 frequency: 100,
                 duration: 0.15,
                 type: 'sawtooth',
-                volume: 0.4,
+                volume: 0.6,
                 distortion: true
             },
             systemAlert: {
                 frequency: 1200,
                 duration: 0.1,
                 type: 'square',
-                volume: 0.3,
+                volume: 0.5,
                 repeat: 3,
                 repeatDelay: 0.1
             }
@@ -70,6 +75,9 @@ export class AudioManager {
         
         // Initialize audio context
         this.initializeAudioContext();
+        
+        // Initialize background music
+        this.initializeBGM();
         
         console.log('AudioManager initialized');
     }
@@ -101,6 +109,44 @@ export class AudioManager {
         } catch (error) {
             console.error('Failed to initialize audio context:', error);
             this.isEnabled = false;
+        }
+    }
+
+    /**
+     * Initialize background music
+     * @private
+     */
+    initializeBGM() {
+        try {
+            this.bgmAudio = new Audio('assets/audio/GameBGM.mp3');
+            this.bgmAudio.loop = true;
+            this.bgmAudio.volume = this.bgmVolume;
+            this.bgmAudio.preload = 'auto';
+            
+            // Handle BGM events
+            this.bgmAudio.addEventListener('canplaythrough', () => {
+                this.bgmLoaded = true;
+                console.log('BGM loaded and ready to play');
+            });
+            
+            this.bgmAudio.addEventListener('error', (error) => {
+                console.error('BGM loading error:', error);
+                this.bgmLoaded = false;
+            });
+            
+            this.bgmAudio.addEventListener('ended', () => {
+                // This shouldn't happen with loop=true, but just in case
+                if (this.isEnabled) {
+                    this.bgmAudio.currentTime = 0;
+                    this.bgmAudio.play().catch(console.error);
+                }
+            });
+            
+            console.log('BGM initialized');
+            
+        } catch (error) {
+            console.error('Failed to initialize BGM:', error);
+            this.bgmLoaded = false;
         }
     }
 
@@ -413,10 +459,113 @@ export class AudioManager {
     }
 
     /**
+     * Start playing background music
+     * @returns {Promise<void>}
+     */
+    async startBGM() {
+        if (!this.isEnabled || !this.bgmAudio) {
+            console.log('BGM not available or audio disabled');
+            return;
+        }
+
+        try {
+            // Set volume and ensure loop is enabled
+            this.bgmAudio.volume = this.bgmVolume;
+            this.bgmAudio.loop = true;
+            this.bgmAudio.currentTime = 0; // Start from beginning
+            
+            await this.bgmAudio.play();
+            console.log('BGM started successfully');
+            
+        } catch (error) {
+            console.error('Failed to start BGM:', error);
+            // Try again after user interaction
+            document.addEventListener('click', this.tryStartBGM.bind(this), { once: true });
+        }
+    }
+
+    /**
+     * Try to start BGM after user interaction
+     * @private
+     */
+    async tryStartBGM() {
+        try {
+            if (this.bgmAudio && this.bgmAudio.paused) {
+                await this.bgmAudio.play();
+                console.log('BGM started after user interaction');
+            }
+        } catch (error) {
+            console.error('Failed to start BGM after user interaction:', error);
+        }
+    }
+
+    /**
+     * Stop background music
+     */
+    stopBGM() {
+        if (this.bgmAudio && !this.bgmAudio.paused) {
+            this.bgmAudio.pause();
+            this.bgmAudio.currentTime = 0;
+            console.log('BGM stopped');
+        }
+    }
+
+    /**
+     * Pause background music
+     */
+    pauseBGM() {
+        if (this.bgmAudio && !this.bgmAudio.paused) {
+            this.bgmAudio.pause();
+            console.log('BGM paused');
+        }
+    }
+
+    /**
+     * Resume background music
+     */
+    async resumeBGM() {
+        if (this.bgmAudio && this.bgmAudio.paused) {
+            try {
+                await this.bgmAudio.play();
+                console.log('BGM resumed');
+            } catch (error) {
+                console.error('Failed to resume BGM:', error);
+            }
+        }
+    }
+
+    /**
+     * Set BGM volume
+     * @param {number} volume - Volume level (0.0 to 1.0)
+     */
+    setBGMVolume(volume) {
+        this.bgmVolume = Math.max(0, Math.min(1, volume));
+        if (this.bgmAudio) {
+            this.bgmAudio.volume = this.bgmVolume;
+        }
+        console.log(`BGM volume set to: ${(this.bgmVolume * 100).toFixed(0)}%`);
+    }
+
+    /**
+     * Check if BGM is currently playing
+     * @returns {boolean} True if BGM is playing
+     */
+    isBGMPlaying() {
+        return this.bgmAudio && !this.bgmAudio.paused && !this.bgmAudio.ended;
+    }
+
+    /**
      * Destroy audio manager and clean up resources
      */
     destroy() {
         try {
+            // Stop and clean up BGM
+            if (this.bgmAudio) {
+                this.bgmAudio.pause();
+                this.bgmAudio.src = '';
+                this.bgmAudio = null;
+            }
+            
             if (this.audioContext && this.audioContext.state !== 'closed') {
                 this.audioContext.close();
             }
@@ -424,6 +573,7 @@ export class AudioManager {
             this.audioContext = null;
             this.soundBuffers.clear();
             this.isEnabled = false;
+            this.bgmLoaded = false;
             
             console.log('AudioManager destroyed');
             
