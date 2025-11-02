@@ -198,7 +198,6 @@ export class ConfigLoader {
             )
         };
     }
-}
 
     /**
      * Load all configurations and return a unified config object
