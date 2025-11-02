@@ -18,8 +18,8 @@ export class InformationObject {
         
         // Set base dimensions based on content type
         if (data.contentType === ContentType.IMAGE) {
-            this.baseWidth = 200;   // Larger base width for images
-            this.baseHeight = 150;  // Larger base height for images
+            this.baseWidth = 400;   // Moderate size base width for images
+            this.baseHeight = 300;  // Moderate size base height for images
         } else {
             this.baseWidth = 280;   // Base width for text/code
             this.baseHeight = 140;  // Base height for text/code
@@ -58,6 +58,9 @@ export class InformationObject {
         // Load image if content type is image
         if (this.contentType === ContentType.IMAGE && this.contentImage) {
             this.loadImage();
+        } else if (this.contentType === ContentType.TEXT || this.contentType === ContentType.CODE) {
+            // Adjust dimensions for text content
+            this.adjustDimensionsForText();
         }
     }
 
@@ -233,11 +236,11 @@ export class InformationObject {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
-        // Word wrap for long text
+        // Use the same word wrapping logic as adjustDimensionsForText
         const words = this.contentText.split(' ');
         const lines = [];
         let currentLine = '';
-        const maxWidth = this.width - 10; // Padding
+        const maxWidth = this.width - 20; // Same padding as in adjustDimensionsForText
 
         for (const word of words) {
             const testLine = currentLine + (currentLine ? ' ' : '') + word;
@@ -254,9 +257,10 @@ export class InformationObject {
             lines.push(currentLine);
         }
 
-        // Render lines
-        const lineHeight = this.fontSize + 4; // Increased line height for better readability
-        const startY = this.y + this.height / 2 - (lines.length - 1) * lineHeight / 2;
+        // Render lines with consistent spacing
+        const lineHeight = this.fontSize + 4;
+        const totalTextHeight = lines.length * lineHeight;
+        const startY = this.y + (this.height - totalTextHeight) / 2 + lineHeight / 2;
 
         lines.forEach((line, index) => {
             ctx.fillText(
@@ -275,36 +279,88 @@ export class InformationObject {
         if (!this.imageLoaded || !this.imageElement) return;
         
         const imageAspectRatio = this.originalImageWidth / this.originalImageHeight;
-        const containerAspectRatio = this.baseWidth / this.baseHeight;
         
-        // Maintain the base area while preserving aspect ratio
-        if (imageAspectRatio > containerAspectRatio) {
-            // Image is wider - fit to width
-            this.width = this.baseWidth;
-            this.height = this.baseWidth / imageAspectRatio;
-        } else {
-            // Image is taller - fit to height
-            this.height = this.baseHeight;
-            this.width = this.baseHeight * imageAspectRatio;
-        }
+        // Calculate dimensions that maintain exact aspect ratio
+        // Start with a target area and adjust to fit aspect ratio
+        const targetArea = this.baseWidth * this.baseHeight;
         
-        // Ensure minimum dimensions for clickability
-        const minWidth = 120;
-        const minHeight = 80;
+        // Calculate width and height that maintain aspect ratio and approximate target area
+        this.width = Math.sqrt(targetArea * imageAspectRatio);
+        this.height = this.width / imageAspectRatio;
         
-        if (this.width < minWidth) {
-            const scale = minWidth / this.width;
-            this.width = minWidth;
+        // Ensure reasonable minimum dimensions for clickability
+        const minWidth = 200;
+        const minHeight = 150;
+        
+        if (this.width < minWidth || this.height < minHeight) {
+            // Scale up proportionally to meet minimum requirements
+            const scaleForWidth = minWidth / this.width;
+            const scaleForHeight = minHeight / this.height;
+            const scale = Math.max(scaleForWidth, scaleForHeight);
+            
+            this.width *= scale;
             this.height *= scale;
         }
         
-        if (this.height < minHeight) {
-            const scale = minHeight / this.height;
-            this.height = minHeight;
-            this.width *= scale;
+        // Round to avoid sub-pixel rendering issues
+        this.width = Math.round(this.width);
+        this.height = Math.round(this.height);
+        
+        console.log(`📐 Adjusted dimensions for image: ${this.width}x${this.height} (original: ${this.originalImageWidth}x${this.originalImageHeight}, ratio: ${imageAspectRatio.toFixed(2)})`);
+    }
+
+    /**
+     * Adjusts object dimensions to fit text content exactly
+     * @private
+     */
+    adjustDimensionsForText() {
+        if (!this.contentText) return;
+        
+        // Create a temporary canvas to measure text
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCtx.font = `${this.fontSize}px ${this.fontFamily}`;
+        
+        // Calculate word wrapping and measure actual text dimensions
+        const words = this.contentText.split(' ');
+        const lines = [];
+        let currentLine = '';
+        const maxWidth = this.baseWidth - 20; // Account for padding
+        
+        for (const word of words) {
+            const testLine = currentLine + (currentLine ? ' ' : '') + word;
+            const metrics = tempCtx.measureText(testLine);
+            
+            if (metrics.width > maxWidth && currentLine) {
+                lines.push(currentLine);
+                currentLine = word;
+            } else {
+                currentLine = testLine;
+            }
+        }
+        if (currentLine) {
+            lines.push(currentLine);
         }
         
-        console.log(`📐 Adjusted dimensions for image: ${this.width.toFixed(0)}x${this.height.toFixed(0)} (original: ${this.originalImageWidth}x${this.originalImageHeight})`);
+        // Calculate actual text width (longest line)
+        let maxLineWidth = 0;
+        for (const line of lines) {
+            const lineWidth = tempCtx.measureText(line).width;
+            maxLineWidth = Math.max(maxLineWidth, lineWidth);
+        }
+        
+        // Calculate dimensions based on actual text
+        const padding = 20; // Padding around text
+        const lineHeight = this.fontSize + 4;
+        
+        this.width = Math.max(150, maxLineWidth + padding); // Minimum width for clickability
+        this.height = Math.max(60, lines.length * lineHeight + padding); // Minimum height for clickability
+        
+        // Round to avoid sub-pixel rendering issues
+        this.width = Math.round(this.width);
+        this.height = Math.round(this.height);
+        
+        console.log(`📝 Adjusted dimensions for text: ${this.width}x${this.height} (${lines.length} lines, max width: ${maxLineWidth.toFixed(0)}px)`);
     }
 
     /**
