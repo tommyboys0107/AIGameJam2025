@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Human Firewall is a Unity 2D game built using the Universal Render Pipeline (URP) with a focus on UI-driven gameplay. The game implements a real-time content classification system where players interact with flowing information objects through mouse clicks. The architecture follows Unity's component-based design with clear separation between game logic, UI management, and content generation systems.
+The Human Firewall is an HTML5 web game with a focus on UI-driven gameplay. The game implements a real-time content classification system where players interact with flowing information objects through mouse clicks. The architecture follows modern web development patterns with clear separation between game logic, UI management, and content generation systems using HTML5 Canvas, CSS3, and vanilla JavaScript.
 
 ## Architecture
 
@@ -28,10 +28,11 @@ graph TB
     J --> O[CodeContent]
 ```
 
-### Scene Structure
+### Page Structure
 
-- **MainMenu Scene**: Entry point with narrative introduction and start button
-- **GamePlay Scene**: Main game loop with HUD interface, information stream, and integrated game over overlay
+- **index.html**: Single page application with game canvas and UI overlays
+- **Game States**: Menu state, gameplay state, and game over state managed through CSS classes and JavaScript
+- **Canvas Layers**: Background canvas for game objects, UI overlay for HUD elements
 
 ## Components and Interfaces
 
@@ -73,20 +74,20 @@ graph TB
   - Spawn positions: Screen edges (top, left, right)
   - Movement speed: Configurable with difficulty scaling
 
-#### InformationObject (MonoBehaviour)
+#### InformationObject (JavaScript Class)
 - **Purpose**: Individual data packets that flow across screen
-- **Components**:
-  - `Rigidbody2D`: Physics-based movement
-  - `Collider2D`: Click detection
-  - `ContentRenderer`: Display content (text/image/code)
 - **Properties**:
-  - `ContentType`: Enum (Text, Image, Code)
-  - `IsCorrupted`: Boolean indicating if content should be blocked
-  - `MovementSpeed`: Current movement velocity
-- **Behavior**:
-  - Move toward bottom of screen
-  - Respond to mouse clicks
-  - Self-destruct when reaching screen bottom
+  - `x, y`: Position coordinates
+  - `width, height`: Dimensions for collision detection
+  - `contentType`: String (text, image, code)
+  - `isCorrupted`: Boolean indicating if content should be blocked
+  - `movementSpeed`: Current movement velocity
+  - `content`: The actual content to display
+- **Methods**:
+  - `update()`: Move toward bottom of screen
+  - `render(ctx)`: Draw on canvas context
+  - `isClicked(mouseX, mouseY)`: Check if mouse click hits this object
+  - `destroy()`: Remove from game when reaching screen bottom
 
 ### 3. Content Classification System
 
@@ -295,20 +296,26 @@ public class CodeContentConfig : ScriptableObject
 
 ## Implementation Notes
 
-### Unity-Specific Considerations
-- Use Unity's new Input System for mouse click handling
-- Implement UI using Unity's UI Toolkit or uGUI system
-- Leverage Unity's 2D physics for object movement and collision
-- Use Unity's Coroutine system for timed events and phase transitions
+### Web-Specific Considerations
+- Use HTML5 Canvas for game rendering and mouse event handling
+- Implement UI using CSS3 for styling and JavaScript for interactivity
+- Use requestAnimationFrame for smooth animation loops
+- Use setTimeout/setInterval for timed events and phase transitions
 
 ### Performance Optimization
 - Object pooling pattern for frequently spawned Information_Objects
-- Efficient UI updates using Unity's UI system best practices
-- Minimize garbage collection through careful memory management
-- Use Unity Profiler to monitor performance during development
+- Efficient canvas rendering with minimal redraws
+- Use CSS transforms for UI animations instead of JavaScript when possible
+- Minimize DOM manipulation during gameplay
+
+### Web Compatibility
+- Responsive design for different screen sizes
+- Touch event support for mobile devices
+- Cross-browser compatibility (Chrome, Firefox, Safari, Edge)
+- Progressive enhancement for older browsers
 
 ### Scalability
-- Modular content system allows easy addition of new content types
+- Modular ES6 class system allows easy addition of new content types
+- JSON configuration files for easy content management
 - Configurable difficulty parameters for easy balancing
-- Extensible phase system for potential additional game modes
 - Clean separation of concerns enables feature additions without major refactoring
