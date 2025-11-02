@@ -40,8 +40,177 @@ body {
 
 /* Game canvas */
 #game-canvas {
-    border: 1px solid #00FF41;
+    border: 2px solid #00FF41;
     background-color: #000000;
+    box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+    position: relative;
+    z-index: 5;
+    display: block;
+    margin: 0 auto;
+}
+
+/* Game screen layout */
+#game-screen {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+#game-screen.hidden {
+    display: none;
+}
+
+/* Canvas container for proper positioning */
+#game-screen canvas {
+    max-width: calc(100vw - 290px); /* Account for HUD side panel */
+    max-height: calc(100vh - 100px); /* Account for HUD top panel */
+}
+
+/* Instructions Overlay */
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.overlay.hidden {
+    display: none;
+}
+
+#instructions-content {
+    max-width: 600px;
+    width: 90%;
+    padding: 40px;
+    border: 2px solid #00BFFF;
+    background: linear-gradient(135deg, rgba(0, 191, 255, 0.1), rgba(0, 0, 0, 0.9));
+    border-radius: 10px;
+    box-shadow: 0 0 50px rgba(0, 191, 255, 0.3);
+    text-align: center;
+    animation: fadeInScale 0.8s ease-out;
+}
+
+#instructions-header h2 {
+    font-size: 2rem;
+    color: #00BFFF;
+    text-shadow: 0 0 15px #00BFFF;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+}
+
+.instruction-subtitle {
+    font-size: 1rem;
+    color: #00FF41;
+    text-shadow: 0 0 8px #00FF41;
+    letter-spacing: 1px;
+    margin-bottom: 30px;
+}
+
+#instructions-body {
+    text-align: left;
+    margin: 30px 0;
+}
+
+.instruction-section {
+    margin-bottom: 25px;
+    padding: 15px;
+    border: 1px solid rgba(0, 255, 65, 0.3);
+    background: rgba(0, 255, 65, 0.05);
+    border-radius: 5px;
+}
+
+.instruction-section h3 {
+    font-size: 1.2rem;
+    color: #00BFFF;
+    text-shadow: 0 0 8px #00BFFF;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.instruction-section p {
+    color: #00FF41;
+    text-shadow: 0 0 5px #00FF41;
+    line-height: 1.5;
+    font-size: 0.95rem;
+}
+
+.control-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    gap: 15px;
+}
+
+.control-key {
+    background: rgba(0, 191, 255, 0.2);
+    border: 1px solid #00BFFF;
+    color: #00BFFF;
+    text-shadow: 0 0 5px #00BFFF;
+    padding: 5px 12px;
+    border-radius: 3px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    min-width: 80px;
+    text-align: center;
+}
+
+.control-desc {
+    color: #00FF41;
+    text-shadow: 0 0 5px #00FF41;
+    font-size: 0.9rem;
+}
+
+.instruction-button {
+    background: linear-gradient(45deg, rgba(0, 191, 255, 0.3), rgba(0, 255, 65, 0.3));
+    border: 2px solid #00BFFF;
+    color: #00BFFF;
+    font-family: 'Courier New', monospace;
+    font-size: 1.1rem;
+    font-weight: bold;
+    padding: 15px 30px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    text-shadow: 0 0 10px #00BFFF;
+    box-shadow: 0 0 20px rgba(0, 191, 255, 0.3);
+    border-radius: 5px;
+}
+
+.instruction-button:hover {
+    background: linear-gradient(45deg, rgba(0, 191, 255, 0.5), rgba(0, 255, 65, 0.5));
+    border-color: #00FF41;
+    color: #00FF41;
+    text-shadow: 0 0 15px #00FF41;
+    box-shadow: 0 0 30px rgba(0, 255, 65, 0.5);
+    transform: scale(1.05);
+}
+
+.instruction-button:active {
+    transform: scale(0.98);
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 /* Basic styling */
@@ -76,6 +245,90 @@ h1 {
     background-size: 20px 20px;
     pointer-events: none;
     z-index: 1;
+    animation: gridPulse 4s ease-in-out infinite alternate;
+}
+
+/* Canvas area background effects */
+#game-canvas::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, 
+        rgba(0, 255, 65, 0.2) 0%, 
+        rgba(0, 191, 255, 0.2) 25%, 
+        rgba(0, 255, 65, 0.2) 50%, 
+        rgba(0, 191, 255, 0.2) 75%, 
+        rgba(0, 255, 65, 0.2) 100%);
+    background-size: 40px 40px;
+    animation: borderScan 3s linear infinite;
+    z-index: -1;
+    border-radius: 2px;
+}
+
+/* Spawn area indicators (subtle visual cues) */
+.spawn-indicator {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: rgba(0, 191, 255, 0.6);
+    border-radius: 50%;
+    animation: spawnPulse 2s ease-in-out infinite;
+    z-index: 3;
+}
+
+.spawn-indicator.top {
+    top: -2px;
+    animation-delay: 0s;
+}
+
+.spawn-indicator.left {
+    left: -2px;
+    animation-delay: 0.5s;
+}
+
+.spawn-indicator.right {
+    right: -2px;
+    animation-delay: 1s;
+}
+
+/* Canvas animations */
+@keyframes gridPulse {
+    0%, 100% { 
+        opacity: 0.3;
+        background-size: 20px 20px;
+    }
+    50% { 
+        opacity: 0.6;
+        background-size: 22px 22px;
+    }
+}
+
+@keyframes borderScan {
+    0% { 
+        background-position: 0 0;
+        opacity: 0.3;
+    }
+    50% {
+        opacity: 0.6;
+    }
+    100% { 
+        background-position: 40px 40px;
+        opacity: 0.3;
+    }
+}
+
+@keyframes spawnPulse {
+    0%, 100% { 
+        opacity: 0.3;
+        transform: scale(1);
+    }
+    50% { 
+        opacity: 1;
+        transform: scale(1.5);
+    }
 }
 
 /* Top HUD bar */
@@ -488,7 +741,6 @@ h1 {
 
 .start-button:hover::before {
     left: 100%;
-}
 }
 
 /* Main Menu Styles */
@@ -1018,6 +1270,223 @@ h1 {
     .game-over-button {
         width: 100%;
         max-width: 250px;
+    }
+}
+
+/* Responsive design for instructions overlay */
+@media (max-width: 768px) {
+    #instructions-content {
+        padding: 25px;
+        width: 95%;
+    }
+    
+    #instructions-header h2 {
+        font-size: 1.5rem;
+    }
+    
+    .instruction-section {
+        padding: 12px;
+        margin-bottom: 20px;
+    }
+    
+    .instruction-section h3 {
+        font-size: 1.1rem;
+    }
+    
+    .control-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    .control-key {
+        min-width: auto;
+        width: fit-content;
+    }
+    
+    .instruction-button {
+        font-size: 1rem;
+        padding: 12px 25px;
+    }
+}
+
+@media (max-width: 480px) {
+    #instructions-content {
+        padding: 20px;
+        width: 98%;
+    }
+    
+    #instructions-header h2 {
+        font-size: 1.3rem;
+        letter-spacing: 1px;
+    }
+    
+    .instruction-subtitle {
+        font-size: 0.9rem;
+    }
+    
+    .instruction-section p,
+    .control-desc {
+        font-size: 0.85rem;
+    }
+    
+    .instruction-button {
+        font-size: 0.9rem;
+        padding: 10px 20px;
+    }
+}
+
+/* Responsive design for HUD and Canvas */
+@media (max-width: 768px) {
+    #hud-top {
+        height: 50px;
+        padding: 0 15px;
+        font-size: 12px;
+    }
+    
+    #hud-side {
+        width: 180px;
+        top: 50px;
+        padding: 15px;
+    }
+    
+    #corruption-label {
+        font-size: 11px;
+    }
+    
+    #corruption-percentage {
+        font-size: 11px;
+    }
+    
+    .status-line {
+        font-size: 10px;
+    }
+    
+    /* Adjust canvas for smaller screens */
+    #game-screen canvas {
+        max-width: calc(100vw - 200px);
+        max-height: calc(100vh - 80px);
+    }
+    
+    #game-screen {
+        padding: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    #hud-top {
+        height: 45px;
+        padding: 0 10px;
+        font-size: 11px;
+        flex-direction: column;
+        justify-content: center;
+        gap: 5px;
+    }
+    
+    #hud-side {
+        width: 160px;
+        top: 45px;
+        padding: 10px;
+    }
+    
+    #corruption-meter {
+        height: 16px;
+    }
+    
+    .status-indicator {
+        width: 6px;
+        height: 6px;
+    }
+    
+    /* Mobile canvas adjustments */
+    #game-screen canvas {
+        max-width: calc(100vw - 180px);
+        max-height: calc(100vh - 70px);
+        border-width: 1px;
+    }
+    
+    #game-screen {
+        padding: 5px;
+    }
+    
+    /* Reduce grid overlay on mobile for performance */
+    #grid-overlay {
+        background-size: 30px 30px;
+        opacity: 0.5;
+    }
+}
+
+/* Landscape orientation optimizations */
+@media (max-height: 500px) and (orientation: landscape) {
+    #hud-top {
+        height: 40px;
+        font-size: 10px;
+    }
+    
+    #hud-side {
+        width: 140px;
+        top: 40px;
+        padding: 8px;
+        font-size: 10px;
+    }
+    
+    #game-screen canvas {
+        max-width: calc(100vw - 160px);
+        max-height: calc(100vh - 60px);
+    }
+    
+    #game-screen {
+        padding: 5px;
+    }
+    
+    .status-line {
+        font-size: 9px;
+        margin-bottom: 4px;
+    }
+    
+    #corruption-label {
+        font-size: 9px;
+    }
+    
+    #corruption-meter {
+        height: 14px;
+    }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+    .start-button,
+    .menu-button,
+    .game-over-button,
+    .instruction-button {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* Increase touch targets */
+    .start-button {
+        padding: 20px 50px;
+    }
+    
+    .menu-button {
+        padding: 20px 35px;
+    }
+    
+    /* Remove hover effects on touch devices */
+    .start-button:hover,
+    .menu-button:hover,
+    .game-over-button:hover,
+    .instruction-button:hover {
+        transform: none;
+    }
+    
+    /* Add active states for touch feedback */
+    .start-button:active,
+    .menu-button:active,
+    .game-over-button:active,
+    .instruction-button:active {
+        transform: scale(0.95);
+        opacity: 0.8;
     }
 }/* Respo
 nsive design for start screen */

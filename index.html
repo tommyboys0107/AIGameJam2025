@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="description" content="Human Firewall - A cyberpunk content classification game">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Human Firewall</title>
     <link rel="stylesheet" href="css/main.css?v=2">
 </head>
@@ -53,6 +57,48 @@
         <!-- Game canvas and HUD -->
         <div id="game-screen" class="screen hidden">
             <canvas id="game-canvas"></canvas>
+            
+            <!-- Game Instructions Overlay -->
+            <div id="instructions-overlay" class="overlay">
+                <div id="instructions-content">
+                    <div id="instructions-header">
+                        <h2>FIREWALL OPERATION PROTOCOL</h2>
+                        <div class="instruction-subtitle">Human Verification Required</div>
+                    </div>
+                    
+                    <div id="instructions-body">
+                        <div class="instruction-section">
+                            <h3>OBJECTIVE</h3>
+                            <p>Review flowing information objects and block corrupted AI-generated content</p>
+                        </div>
+                        
+                        <div class="instruction-section">
+                            <h3>CONTROLS</h3>
+                            <div class="control-item">
+                                <span class="control-key">CLICK</span>
+                                <span class="control-desc">Block suspicious information object</span>
+                            </div>
+                            <div class="control-item">
+                                <span class="control-key">IGNORE</span>
+                                <span class="control-desc">Allow legitimate content to pass</span>
+                            </div>
+                        </div>
+                        
+                        <div class="instruction-section">
+                            <h3>WARNING</h3>
+                            <p>Incorrect decisions increase system corruption. Maximum corruption triggers system failure.</p>
+                        </div>
+                    </div>
+                    
+                    <div id="instructions-footer">
+                        <button id="start-firewall-button" class="instruction-button">
+                            <span class="button-text">ACTIVATE FIREWALL</span>
+                            <span class="button-subtext">Begin content review</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
             <div id="hud">
                 <!-- Top HUD bar -->
                 <div id="hud-top">
@@ -175,6 +221,124 @@
         let uiManager;
         let gameSystemsInitialized = false;
 
+        // Canvas setup function
+        function setupGameCanvas(canvas) {
+            if (!canvas) {
+                console.error('Canvas element not found');
+                return;
+            }
+
+            // Get container dimensions for responsive sizing
+            const gameScreen = document.getElementById('game-screen');
+            const hudSide = document.getElementById('hud-side');
+            const hudTop = document.getElementById('hud-top');
+            
+            // Calculate available space for canvas
+            const containerWidth = gameScreen ? gameScreen.clientWidth : window.innerWidth;
+            const containerHeight = gameScreen ? gameScreen.clientHeight : window.innerHeight;
+            
+            // Account for HUD elements
+            const hudSideWidth = hudSide ? hudSide.offsetWidth : 250;
+            const hudTopHeight = hudTop ? hudTop.offsetHeight : 60;
+            
+            // Calculate canvas dimensions
+            const availableWidth = containerWidth - hudSideWidth - 40; // 40px for margins
+            const availableHeight = containerHeight - hudTopHeight - 40;
+            
+            // Set minimum and maximum canvas sizes
+            const minWidth = 600;
+            const minHeight = 400;
+            const maxWidth = 1200;
+            const maxHeight = 800;
+            
+            // Calculate optimal canvas size maintaining aspect ratio
+            const targetAspectRatio = 4/3; // 4:3 aspect ratio
+            let canvasWidth = Math.max(minWidth, Math.min(maxWidth, availableWidth));
+            let canvasHeight = Math.max(minHeight, Math.min(maxHeight, availableHeight));
+            
+            // Adjust to maintain aspect ratio
+            if (canvasWidth / canvasHeight > targetAspectRatio) {
+                canvasWidth = canvasHeight * targetAspectRatio;
+            } else {
+                canvasHeight = canvasWidth / targetAspectRatio;
+            }
+            
+            // Set canvas dimensions
+            canvas.width = Math.floor(canvasWidth);
+            canvas.height = Math.floor(canvasHeight);
+            
+            // Set CSS dimensions for proper scaling
+            canvas.style.width = canvas.width + 'px';
+            canvas.style.height = canvas.height + 'px';
+            
+            // Configure canvas context for crisp rendering
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+                // Disable image smoothing for pixel-perfect rendering
+                ctx.imageSmoothingEnabled = false;
+                
+                // Set default font for text rendering
+                ctx.font = '14px "Courier New", monospace';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                // Set default colors
+                ctx.fillStyle = '#00FF41';
+                ctx.strokeStyle = '#00FF41';
+                ctx.lineWidth = 1;
+            }
+            
+            // Set up spawn boundaries (area where objects can move)
+            const spawnBoundaries = {
+                left: -150,  // Objects can spawn off-screen
+                right: canvas.width + 150,
+                top: -100,
+                bottom: canvas.height + 50,
+                playArea: {
+                    left: 0,
+                    right: canvas.width,
+                    top: 0,
+                    bottom: canvas.height
+                }
+            };
+            
+            // Store boundaries on canvas for access by other systems
+            canvas.spawnBoundaries = spawnBoundaries;
+            
+            console.log(`Canvas configured: ${canvas.width}x${canvas.height}, boundaries:`, spawnBoundaries);
+            
+            return canvas;
+        }
+
+        // Handle window resize for responsive canvas
+        function handleCanvasResize() {
+            const canvas = document.getElementById('game-canvas');
+            if (canvas && gameSystemsInitialized) {
+                setupGameCanvas(canvas);
+                
+                // Update data stream generator with new dimensions
+                if (gameManager && gameManager.dataStreamGenerator) {
+                    gameManager.dataStreamGenerator.setScreenDimensions(canvas.width, canvas.height);
+                }
+            }
+        }
+
+        // Add resize listener
+        window.addEventListener('resize', debounce(handleCanvasResize, 250));
+
+        // Debounce function to limit resize events
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
         // Simple start button handler first
         document.addEventListener('DOMContentLoaded', () => {
             console.log('DOM loaded, setting up start button...');
@@ -240,10 +404,9 @@
                 uiManager.initializeMainMenu();
                 uiManager.initializeGameOver();
                 
-                // Set up canvas
+                // Set up canvas with proper dimensions and scaling
                 const canvas = document.getElementById('game-canvas');
-                canvas.width = 800;
-                canvas.height = 600;
+                setupGameCanvas(canvas);
                 
                 // Initialize content provider
                 const contentProvider = new ContentProvider();
@@ -279,16 +442,44 @@
                 // Set up UI event handlers
                 uiManager.setGameStartHandler(() => {
                     console.log('Starting game...');
-                    gameManager.startGame();
+                    // Show instructions overlay first
+                    const instructionsOverlay = document.getElementById('instructions-overlay');
+                    const gameScreen = document.getElementById('game-screen');
+                    const mainMenu = document.getElementById('main-menu');
+                    
+                    if (instructionsOverlay && gameScreen && mainMenu) {
+                        mainMenu.classList.add('hidden');
+                        gameScreen.classList.remove('hidden');
+                        instructionsOverlay.classList.remove('hidden');
+                        
+                        // Set up instructions button handler
+                        const startFirewallButton = document.getElementById('start-firewall-button');
+                        if (startFirewallButton) {
+                            startFirewallButton.onclick = () => {
+                                instructionsOverlay.classList.add('hidden');
+                                gameManager.startGame();
+                            };
+                        }
+                    }
                 });
                 
                 uiManager.setGameRestartHandler(() => {
                     console.log('Restarting game...');
+                    // Hide instructions overlay and start directly
+                    const instructionsOverlay = document.getElementById('instructions-overlay');
+                    if (instructionsOverlay) {
+                        instructionsOverlay.classList.add('hidden');
+                    }
                     gameManager.startGame();
                 });
                 
                 uiManager.setReturnToMenuHandler(() => {
                     console.log('Returning to menu...');
+                    // Hide instructions overlay when returning to menu
+                    const instructionsOverlay = document.getElementById('instructions-overlay');
+                    if (instructionsOverlay) {
+                        instructionsOverlay.classList.add('hidden');
+                    }
                     gameManager.resetToMenu();
                 });
                 
