@@ -215,11 +215,14 @@
         import { CorruptionSystem } from './js/managers/CorruptionSystem.js';
         import { UIManager } from './js/ui/UIManager.js';
         import { ContentProvider } from './js/content/ContentProvider.js';
-        import { SpawnSettings } from './js/core/dataClasses.js';
+        import { SpawnSettings, PhaseSettings } from './js/core/dataClasses.js';
+        import { ConfigLoader } from './js/core/ConfigLoader.js';
 
         let gameManager;
         let uiManager;
         let gameSystemsInitialized = false;
+        let initializationAttempts = 0;
+        const maxInitializationAttempts = 3;
 
         // Canvas setup function
         function setupGameCanvas(canvas) {
@@ -396,22 +399,41 @@
                 return;
             }
             
-            console.log('Human Firewall - Initializing game systems...');
+            initializationAttempts++;
+            console.log(`Human Firewall - Initializing game systems (attempt ${initializationAttempts}/${maxInitializationAttempts})...`);
             
             try {
-                // Initialize UI Manager
+                // Step 1: Load configuration files first
+                console.log('Step 1: Loading configuration files...');
+                const configLoader = new ConfigLoader();
+                let gameConfig = null;
+                
+                try {
+                    gameConfig = await configLoader.loadAllConfigurations();
+                    console.log('Configuration loaded successfully:', gameConfig);
+                } catch (configError) {
+                    console.warn('Failed to load configuration, using defaults:', configError);
+                    gameConfig = configLoader.getDefaultConfiguration();
+                }
+                
+                // Step 2: Initialize UI Manager first (no dependencies)
+                console.log('Step 2: Initializing UI Manager...');
                 uiManager = new UIManager();
                 uiManager.initializeMainMenu();
                 uiManager.initializeGameOver();
                 
-                // Set up canvas with proper dimensions and scaling
+                // Step 3: Set up canvas with proper dimensions and scaling
+                console.log('Step 3: Setting up game canvas...');
                 const canvas = document.getElementById('game-canvas');
+                if (!canvas) {
+                    throw new Error('Game canvas element not found');
+                }
                 setupGameCanvas(canvas);
                 
-                // Initialize content provider
+                // Step 4: Initialize content provider with async loading
+                console.log('Step 4: Initializing content provider...');
                 const contentProvider = new ContentProvider();
                 
-                // Try to load content, but don't fail if it doesn't work
                 try {
                     await contentProvider.loadContent();
                     console.log('Content loaded successfully');
@@ -420,104 +442,321 @@
                     // ContentProvider should handle fallback content automatically
                 }
                 
-                // Initialize game subsystems
-                const phaseManager = new PhaseManager();
-                const corruptionSystem = new CorruptionSystem();
-                const spawnSettings = new SpawnSettings();
+                // Verify content provider is ready
+                if (!contentProvider.isContentLoaded()) {
+                    console.warn('Content provider not ready, forcing fallback setup');
+                    contentProvider.setupFallbackContent();
+                }
+                
+                // Step 5: Initialize core game systems with configuration
+                console.log('Step 5: Initializing core game systems...');
+                
+                // Create settings objects from configuration
+                const phaseSettings = new PhaseSettings(
+                    gameConfig.phaseSettings?.phaseDuration || 15000,
+                    gameConfig.phaseSettings?.maxGameDuration || 120000,
+                    gameConfig.phaseSettings?.difficultyIncreaseRate || 1.2
+                );
+                
+                const spawnSettings = new SpawnSettings(
+                    gameConfig.spawnSettings?.baseSpawnIntervalMin || 500,
+                    gameConfig.spawnSettings?.baseSpawnIntervalMax || 1000,
+                    gameConfig.spawnSettings?.maxConcurrentObjects || 15,
+                    gameConfig.spawnSettings?.movementSpeed || 2.0
+                );
+                
+                // Initialize subsystems in dependency order
+                const phaseManager = new PhaseManager(phaseSettings);
+                const corruptionSystem = new CorruptionSystem(gameConfig.corruptionThreshold || 100);
                 const dataStreamGenerator = new DataStreamGenerator(contentProvider, phaseManager, spawnSettings);
                 
-                // Set canvas dimensions for data stream generator
+                // Step 6: Configure data stream generator
+                console.log('Step 6: Configuring data stream generator...');
                 dataStreamGenerator.setScreenDimensions(canvas.width, canvas.height);
                 
-                // Initialize game manager
+                // Set up system connections before GameManager initialization
+                console.log('Step 7: Setting up system connections...');
+                
+                // Connect phase manager to data stream generator
+                phaseManager.onPhaseChange = (newPhase, phaseNumber, difficultyMultiplier) => {
+                    console.log(`Phase changed to: ${newPhase} (${phaseNumber}), difficulty: ${difficultyMultiplier.toFixed(2)}`);
+                    dataStreamGenerator.onPhaseChange(newPhase, phaseNumber, difficultyMultiplier);
+                    uiManager.updatePhaseDisplay(newPhase);
+                    uiManager.updatePhaseTimer(Math.ceil(phaseManager.getPhaseTimeRemaining() / 1000));
+                };
+                
+                // Step 8: Initialize game manager with all subsystems
+                console.log('Step 8: Initializing game manager...');
                 gameManager = new GameManager();
-                gameManager.initialize({
+                
+                // Validate all required subsystems before initialization
+                const subsystems = {
                     phaseManager,
                     dataStreamGenerator,
                     corruptionSystem,
                     uiManager,
                     canvas
-                });
+                };
                 
-                // Set up UI event handlers
-                uiManager.setGameStartHandler(() => {
-                    console.log('Starting game...');
-                    // Show instructions overlay first
-                    const instructionsOverlay = document.getElementById('instructions-overlay');
-                    const gameScreen = document.getElementById('game-screen');
-                    const mainMenu = document.getElementById('main-menu');
-                    
-                    if (instructionsOverlay && gameScreen && mainMenu) {
-                        mainMenu.classList.add('hidden');
-                        gameScreen.classList.remove('hidden');
-                        instructionsOverlay.classList.remove('hidden');
-                        
-                        // Set up instructions button handler
-                        const startFirewallButton = document.getElementById('start-firewall-button');
-                        if (startFirewallButton) {
-                            startFirewallButton.onclick = () => {
-                                instructionsOverlay.classList.add('hidden');
-                                gameManager.startGame();
-                            };
-                        }
+                // Verify all subsystems are properly initialized
+                for (const [name, system] of Object.entries(subsystems)) {
+                    if (!system) {
+                        throw new Error(`Required subsystem '${name}' is null or undefined`);
                     }
-                });
+                }
                 
-                uiManager.setGameRestartHandler(() => {
-                    console.log('Restarting game...');
-                    // Hide instructions overlay and start directly
-                    const instructionsOverlay = document.getElementById('instructions-overlay');
-                    if (instructionsOverlay) {
-                        instructionsOverlay.classList.add('hidden');
-                    }
-                    gameManager.startGame();
-                });
+                gameManager.initialize(subsystems);
                 
-                uiManager.setReturnToMenuHandler(() => {
-                    console.log('Returning to menu...');
-                    // Hide instructions overlay when returning to menu
-                    const instructionsOverlay = document.getElementById('instructions-overlay');
-                    if (instructionsOverlay) {
-                        instructionsOverlay.classList.add('hidden');
-                    }
-                    gameManager.resetToMenu();
-                });
+                // Step 9: Set up UI event handlers with error handling
+                console.log('Step 9: Setting up UI event handlers...');
+                setupUIEventHandlers();
+                
+                // Step 10: Perform system validation
+                console.log('Step 10: Performing system validation...');
+                await validateSystemIntegration();
                 
                 gameSystemsInitialized = true;
                 console.log('Human Firewall - Game systems initialized successfully!');
                 
-            } catch (error) {
-                console.error('Failed to initialize game systems:', error);
+                // Show success indicator
+                showInitializationStatus('success', 'Game systems initialized successfully');
                 
-                // Show error message to user
-                const errorDiv = document.createElement('div');
-                errorDiv.style.cssText = `
-                    position: fixed;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    background: rgba(255, 0, 0, 0.9);
-                    color: white;
-                    padding: 20px;
-                    border-radius: 10px;
-                    font-family: 'Courier New', monospace;
-                    z-index: 1000;
-                    text-align: center;
-                    max-width: 500px;
-                `;
-                errorDiv.innerHTML = `
-                    <h3>Game Initialization Failed</h3>
-                    <p><strong>Error:</strong> ${error.message}</p>
-                    <p>This might be due to browser security restrictions when running from local files.</p>
-                    <p><strong>Solutions:</strong></p>
-                    <ul style="text-align: left; margin: 10px 0;">
-                        <li>Run from a local web server (e.g., Live Server extension)</li>
-                        <li>Or use a browser with relaxed security for local files</li>
-                    </ul>
-                    <button onclick="location.reload()" style="margin-top: 10px; padding: 5px 10px;">Reload Page</button>
-                `;
-                document.body.appendChild(errorDiv);
+            } catch (error) {
+                console.error(`Failed to initialize game systems (attempt ${initializationAttempts}):`, error);
+                
+                // Retry logic
+                if (initializationAttempts < maxInitializationAttempts) {
+                    console.log(`Retrying initialization in 2 seconds...`);
+                    showInitializationStatus('warning', `Initialization failed, retrying... (${initializationAttempts}/${maxInitializationAttempts})`);
+                    
+                    setTimeout(() => {
+                        initializeGameSystems();
+                    }, 2000);
+                } else {
+                    console.error('Maximum initialization attempts reached, showing error to user');
+                    showInitializationError(error);
+                }
             }
+        }
+
+        function setupUIEventHandlers() {
+            try {
+                uiManager.setGameStartHandler(() => {
+                    console.log('Starting game...');
+                    try {
+                        // Show instructions overlay first
+                        const instructionsOverlay = document.getElementById('instructions-overlay');
+                        const gameScreen = document.getElementById('game-screen');
+                        const mainMenu = document.getElementById('main-menu');
+                        
+                        if (instructionsOverlay && gameScreen && mainMenu) {
+                            mainMenu.classList.add('hidden');
+                            gameScreen.classList.remove('hidden');
+                            instructionsOverlay.classList.remove('hidden');
+                            
+                            // Set up instructions button handler with error handling
+                            const startFirewallButton = document.getElementById('start-firewall-button');
+                            if (startFirewallButton) {
+                                startFirewallButton.onclick = async () => {
+                                    try {
+                                        instructionsOverlay.classList.add('hidden');
+                                        await gameManager.startGame();
+                                    } catch (error) {
+                                        console.error('Error starting game:', error);
+                                        showGameError('Failed to start game: ' + error.message);
+                                    }
+                                };
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error in game start handler:', error);
+                        showGameError('Failed to show game screen: ' + error.message);
+                    }
+                });
+                
+                uiManager.setGameRestartHandler(async () => {
+                    console.log('Restarting game...');
+                    try {
+                        // Hide instructions overlay and start directly
+                        const instructionsOverlay = document.getElementById('instructions-overlay');
+                        if (instructionsOverlay) {
+                            instructionsOverlay.classList.add('hidden');
+                        }
+                        await gameManager.startGame();
+                    } catch (error) {
+                        console.error('Error restarting game:', error);
+                        showGameError('Failed to restart game: ' + error.message);
+                    }
+                });
+                
+                uiManager.setReturnToMenuHandler(() => {
+                    console.log('Returning to menu...');
+                    try {
+                        // Hide instructions overlay when returning to menu
+                        const instructionsOverlay = document.getElementById('instructions-overlay');
+                        if (instructionsOverlay) {
+                            instructionsOverlay.classList.add('hidden');
+                        }
+                        gameManager.resetToMenu();
+                    } catch (error) {
+                        console.error('Error returning to menu:', error);
+                        showGameError('Failed to return to menu: ' + error.message);
+                    }
+                });
+                
+                console.log('UI event handlers set up successfully');
+            } catch (error) {
+                console.error('Failed to set up UI event handlers:', error);
+                throw new Error('UI event handler setup failed: ' + error.message);
+            }
+        }
+
+        async function validateSystemIntegration() {
+            console.log('Validating system integration...');
+            
+            // Test 1: Verify all managers are initialized
+            if (!gameManager || !uiManager) {
+                throw new Error('Core managers not initialized');
+            }
+            
+            // Test 2: Verify GameManager subsystems
+            if (!gameManager.isInitialized) {
+                throw new Error('GameManager not properly initialized');
+            }
+            
+            // Test 3: Verify content provider
+            const contentProvider = gameManager.dataStreamGenerator?.contentProvider;
+            if (!contentProvider || !contentProvider.isContentLoaded()) {
+                console.warn('Content provider validation failed, but continuing with fallback');
+            }
+            
+            // Test 4: Verify canvas setup
+            const canvas = document.getElementById('game-canvas');
+            if (!canvas || !canvas.getContext('2d')) {
+                throw new Error('Canvas not properly set up');
+            }
+            
+            // Test 5: Test a simple spawn (if possible)
+            try {
+                const testSpawn = gameManager.dataStreamGenerator?.forceSpawn?.('text', false);
+                if (testSpawn) {
+                    // Clean up test spawn
+                    gameManager.dataStreamGenerator.clearAllObjects();
+                    console.log('Spawn system validation passed');
+                }
+            } catch (spawnError) {
+                console.warn('Spawn system validation failed:', spawnError);
+                // Not critical, continue
+            }
+            
+            console.log('System integration validation completed');
+        }
+
+        function showInitializationStatus(type, message) {
+            // Remove any existing status
+            const existingStatus = document.getElementById('init-status');
+            if (existingStatus) {
+                existingStatus.remove();
+            }
+            
+            const statusDiv = document.createElement('div');
+            statusDiv.id = 'init-status';
+            statusDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 10px 15px;
+                border-radius: 5px;
+                font-family: 'Courier New', monospace;
+                font-size: 12px;
+                z-index: 1000;
+                max-width: 300px;
+                ${type === 'success' ? 'background: rgba(0, 255, 65, 0.9); color: black;' : 
+                  type === 'warning' ? 'background: rgba(255, 170, 0, 0.9); color: black;' : 
+                  'background: rgba(255, 68, 68, 0.9); color: white;'}
+            `;
+            statusDiv.textContent = message;
+            document.body.appendChild(statusDiv);
+            
+            // Auto-remove after delay
+            setTimeout(() => {
+                if (statusDiv.parentNode) {
+                    statusDiv.remove();
+                }
+            }, type === 'success' ? 3000 : 5000);
+        }
+
+        function showInitializationError(error) {
+            const errorDiv = document.createElement('div');
+            errorDiv.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(255, 0, 0, 0.95);
+                color: white;
+                padding: 20px;
+                border-radius: 10px;
+                font-family: 'Courier New', monospace;
+                z-index: 1000;
+                text-align: center;
+                max-width: 500px;
+                border: 2px solid #FF4444;
+            `;
+            errorDiv.innerHTML = `
+                <h3>🚨 SYSTEM INITIALIZATION FAILED</h3>
+                <p><strong>Error:</strong> ${error.message}</p>
+                <p>The Human Firewall system could not be initialized after ${maxInitializationAttempts} attempts.</p>
+                <div style="text-align: left; margin: 15px 0; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 5px;">
+                    <strong>Possible solutions:</strong>
+                    <ul style="margin: 5px 0;">
+                        <li>Run from a local web server (e.g., Live Server extension)</li>
+                        <li>Check browser console for detailed error messages</li>
+                        <li>Ensure all game files are present and accessible</li>
+                        <li>Try a different browser or disable security restrictions</li>
+                    </ul>
+                </div>
+                <div style="margin-top: 15px;">
+                    <button onclick="location.reload()" style="margin: 5px; padding: 8px 15px; background: #FF4444; color: white; border: none; border-radius: 3px; cursor: pointer;">Reload Page</button>
+                    <button onclick="this.parentElement.parentElement.remove()" style="margin: 5px; padding: 8px 15px; background: #666; color: white; border: none; border-radius: 3px; cursor: pointer;">Dismiss</button>
+                </div>
+            `;
+            document.body.appendChild(errorDiv);
+        }
+
+        function showGameError(message) {
+            console.error('Game error:', message);
+            
+            // Show temporary error message
+            const errorDiv = document.createElement('div');
+            errorDiv.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(255, 68, 68, 0.95);
+                color: white;
+                padding: 15px 20px;
+                border-radius: 8px;
+                font-family: 'Courier New', monospace;
+                z-index: 1000;
+                text-align: center;
+                max-width: 400px;
+                border: 1px solid #FF4444;
+            `;
+            errorDiv.innerHTML = `
+                <h4>⚠️ GAME ERROR</h4>
+                <p>${message}</p>
+                <button onclick="this.parentElement.remove()" style="margin-top: 10px; padding: 5px 10px; background: #FF4444; color: white; border: none; border-radius: 3px; cursor: pointer;">OK</button>
+            `;
+            document.body.appendChild(errorDiv);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (errorDiv.parentNode) {
+                    errorDiv.remove();
+                }
+            }, 5000);
         }
     </script>
 </body>

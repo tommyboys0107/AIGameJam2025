@@ -1,7 +1,7 @@
 /**
  * ConfigLoader - Handles loading and managing all game configuration files
  */
-class ConfigLoader {
+export class ConfigLoader {
     constructor() {
         this.configs = {};
         this.loaded = false;
@@ -200,5 +200,59 @@ class ConfigLoader {
     }
 }
 
-// Export for use in other modules
-window.ConfigLoader = ConfigLoader;
+    /**
+     * Load all configurations and return a unified config object
+     * @returns {Promise<Object>} Unified configuration object
+     */
+    async loadAllConfigurations() {
+        await this.loadAllConfigs();
+        
+        return {
+            phaseSettings: {
+                phaseDuration: this.getSetting('settings.gameSettings.phaseDuration', 15) * 1000, // Convert to ms
+                maxGameDuration: this.getSetting('settings.gameSettings.maxGameDuration', 120) * 1000, // Convert to ms
+                difficultyIncreaseRate: this.getSetting('settings.gameSettings.difficultyIncreaseRate', 1.2)
+            },
+            spawnSettings: {
+                baseSpawnIntervalMin: this.getSetting('settings.spawnSettings.baseSpawnIntervalMin', 0.5) * 1000, // Convert to ms
+                baseSpawnIntervalMax: this.getSetting('settings.spawnSettings.baseSpawnIntervalMax', 1.0) * 1000, // Convert to ms
+                maxConcurrentObjects: this.getSetting('settings.spawnSettings.maxConcurrentObjects', 15),
+                movementSpeed: this.getSetting('settings.spawnSettings.movementSpeed', 2.0)
+            },
+            corruptionThreshold: this.getSetting('settings.corruptionSettings.maxCorruption', 100),
+            corruptionPenalties: this.getSetting('settings.corruptionSettings.corruptionPenalties', {
+                missedCorrupted: 15,
+                falsePositive: 10,
+                correctBlock: -2,
+                correctAllow: -1
+            })
+        };
+    }
+
+    /**
+     * Get default configuration when loading fails
+     * @returns {Object} Default configuration object
+     */
+    getDefaultConfiguration() {
+        return {
+            phaseSettings: {
+                phaseDuration: 15000, // 15 seconds
+                maxGameDuration: 120000, // 2 minutes
+                difficultyIncreaseRate: 1.2
+            },
+            spawnSettings: {
+                baseSpawnIntervalMin: 500, // 0.5 seconds
+                baseSpawnIntervalMax: 1000, // 1 second
+                maxConcurrentObjects: 15,
+                movementSpeed: 2.0
+            },
+            corruptionThreshold: 100,
+            corruptionPenalties: {
+                missedCorrupted: 15,
+                falsePositive: 10,
+                correctBlock: -2,
+                correctAllow: -1
+            }
+        };
+    }
+}

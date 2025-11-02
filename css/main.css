@@ -1532,3 +1532,385 @@ nsive design for start screen */
         padding: 12px 40px;
     }
 }
+/* E
+nhanced Audio and Visual Effects */
+
+/* Corruption meter enhanced animations */
+@keyframes corruptionRise {
+    0% { 
+        transform: scaleY(0);
+        filter: brightness(1);
+    }
+    50% {
+        transform: scaleY(1.1);
+        filter: brightness(1.3);
+    }
+    100% { 
+        transform: scaleY(1);
+        filter: brightness(1);
+    }
+}
+
+@keyframes corruptionPulse {
+    0%, 100% { 
+        box-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
+        transform: scale(1);
+    }
+    50% { 
+        box-shadow: 0 0 25px rgba(255, 68, 68, 0.9);
+        transform: scale(1.02);
+    }
+}
+
+@keyframes systemAlertFlash {
+    0%, 100% { 
+        background-color: rgba(255, 215, 0, 0.1);
+        border-color: #FFD700;
+        color: #FFD700;
+    }
+    25% { 
+        background-color: rgba(255, 68, 68, 0.2);
+        border-color: #FF4444;
+        color: #FF4444;
+    }
+    50% { 
+        background-color: rgba(255, 215, 0, 0.3);
+        border-color: #FFD700;
+        color: #FFD700;
+    }
+    75% { 
+        background-color: rgba(255, 68, 68, 0.2);
+        border-color: #FF4444;
+        color: #FF4444;
+    }
+}
+
+@keyframes phaseTransition {
+    0% { 
+        opacity: 1;
+        transform: translateX(0);
+    }
+    25% { 
+        opacity: 0.5;
+        transform: translateX(-10px);
+    }
+    50% { 
+        opacity: 0;
+        transform: translateX(0);
+    }
+    75% { 
+        opacity: 0.5;
+        transform: translateX(10px);
+    }
+    100% { 
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes gameOverGlitch {
+    0%, 100% { 
+        transform: translateX(0);
+        filter: hue-rotate(0deg);
+    }
+    10% { 
+        transform: translateX(-5px);
+        filter: hue-rotate(90deg);
+    }
+    20% { 
+        transform: translateX(5px);
+        filter: hue-rotate(180deg);
+    }
+    30% { 
+        transform: translateX(-3px);
+        filter: hue-rotate(270deg);
+    }
+    40% { 
+        transform: translateX(3px);
+        filter: hue-rotate(360deg);
+    }
+    50% { 
+        transform: translateX(-2px);
+        filter: hue-rotate(180deg);
+    }
+    60% { 
+        transform: translateX(2px);
+        filter: hue-rotate(90deg);
+    }
+    70% { 
+        transform: translateX(-1px);
+        filter: hue-rotate(270deg);
+    }
+    80% { 
+        transform: translateX(1px);
+        filter: hue-rotate(0deg);
+    }
+    90% { 
+        transform: translateX(-1px);
+        filter: hue-rotate(45deg);
+    }
+}
+
+@keyframes successCelebration {
+    0%, 100% { 
+        transform: scale(1) rotate(0deg);
+        filter: brightness(1);
+    }
+    25% { 
+        transform: scale(1.1) rotate(2deg);
+        filter: brightness(1.3);
+    }
+    50% { 
+        transform: scale(1.05) rotate(-1deg);
+        filter: brightness(1.5);
+    }
+    75% { 
+        transform: scale(1.08) rotate(1deg);
+        filter: brightness(1.2);
+    }
+}
+
+@keyframes dataStreamIntensify {
+    0% { 
+        background-size: 20px 20px;
+        opacity: 0.3;
+    }
+    50% { 
+        background-size: 15px 15px;
+        opacity: 0.7;
+    }
+    100% { 
+        background-size: 10px 10px;
+        opacity: 0.5;
+    }
+}
+
+@keyframes corruptionSpread {
+    0% { 
+        background: linear-gradient(90deg, #00FF41 0%, #00FF41 100%);
+    }
+    25% { 
+        background: linear-gradient(90deg, #00FF41 0%, #FFD700 25%, #00FF41 100%);
+    }
+    50% { 
+        background: linear-gradient(90deg, #00FF41 0%, #FFD700 50%, #00FF41 100%);
+    }
+    75% { 
+        background: linear-gradient(90deg, #00FF41 0%, #FFD700 50%, #FF4500 75%, #00FF41 100%);
+    }
+    100% { 
+        background: linear-gradient(90deg, #00FF41 0%, #FFD700 30%, #FF4500 70%, #FF0000 100%);
+    }
+}
+
+/* Enhanced corruption meter states */
+#corruption-fill.rising {
+    animation: corruptionRise 0.5s ease-out;
+}
+
+#corruption-meter.pulsing {
+    animation: corruptionPulse 1s ease-in-out infinite;
+}
+
+#corruption-meter.spreading #corruption-fill {
+    animation: corruptionSpread 2s ease-in-out;
+}
+
+/* System alert animations */
+.system-alert {
+    animation: systemAlertFlash 0.5s ease-in-out infinite;
+}
+
+.system-critical {
+    animation: systemAlertFlash 0.3s ease-in-out infinite, screenShake 0.1s ease-in-out infinite;
+}
+
+/* Phase transition effects */
+.phase-changing {
+    animation: phaseTransition 1s ease-in-out;
+}
+
+/* Game over enhanced effects */
+#game-over.glitch-effect {
+    animation: gameOverGlitch 0.2s ease-in-out infinite;
+}
+
+#game-over.success .success-celebration {
+    animation: successCelebration 2s ease-in-out;
+}
+
+/* Data stream intensity effects */
+#grid-overlay.intense {
+    animation: dataStreamIntensify 3s ease-in-out infinite;
+}
+
+/* Audio feedback visual indicators */
+.audio-feedback {
+    position: relative;
+}
+
+.audio-feedback::after {
+    content: '♪';
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    color: #00BFFF;
+    font-size: 12px;
+    animation: audioIndicator 0.5s ease-out;
+    pointer-events: none;
+}
+
+@keyframes audioIndicator {
+    0% { 
+        opacity: 0;
+        transform: scale(0.5) translateY(0);
+    }
+    50% { 
+        opacity: 1;
+        transform: scale(1.2) translateY(-5px);
+    }
+    100% { 
+        opacity: 0;
+        transform: scale(1) translateY(-10px);
+    }
+}
+
+/* Enhanced click feedback */
+.click-success {
+    animation: successPulse 0.3s ease-out, audioIndicator 0.5s ease-out;
+}
+
+.click-failure {
+    animation: failurePulse 0.3s ease-out, screenShake 0.2s ease-out;
+}
+
+.click-miss {
+    animation: pulse 0.2s ease-out;
+}
+
+/* Screen flash effects for audio feedback */
+.screen-flash-success {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 255, 65, 0.1);
+    pointer-events: none;
+    z-index: 9999;
+    animation: screenFlashSuccess 0.2s ease-out;
+}
+
+.screen-flash-failure {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 68, 68, 0.2);
+    pointer-events: none;
+    z-index: 9999;
+    animation: screenFlashFailure 0.3s ease-out;
+}
+
+.screen-flash-phase {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 191, 255, 0.15);
+    pointer-events: none;
+    z-index: 9999;
+    animation: screenFlashPhase 0.8s ease-out;
+}
+
+@keyframes screenFlashSuccess {
+    0% { opacity: 0; }
+    50% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@keyframes screenFlashFailure {
+    0% { opacity: 0; }
+    25% { opacity: 1; }
+    50% { opacity: 0; }
+    75% { opacity: 0.5; }
+    100% { opacity: 0; }
+}
+
+@keyframes screenFlashPhase {
+    0% { opacity: 0; }
+    20% { opacity: 1; }
+    40% { opacity: 0; }
+    60% { opacity: 0.7; }
+    80% { opacity: 0; }
+    100% { opacity: 0; }
+}
+
+/* Enhanced HUD animations */
+#status-message.audio-enhanced {
+    animation: pulse 0.5s ease-in-out, audioIndicator 0.5s ease-out;
+}
+
+#current-phase.phase-change-audio {
+    animation: phaseTransition 1s ease-in-out, audioIndicator 0.8s ease-out 0.2s;
+}
+
+/* Corruption meter audio-visual sync */
+#corruption-percentage.corruption-audio {
+    animation: corruptionPulse 0.5s ease-out, audioIndicator 0.3s ease-out 0.1s;
+}
+
+/* Game over audio-visual effects */
+#game-over-title.audio-enhanced {
+    animation: gameOverGlitch 0.5s ease-in-out 3, audioIndicator 1s ease-out;
+}
+
+#game-over.success #game-over-title.audio-enhanced {
+    animation: successCelebration 2s ease-in-out, audioIndicator 0.8s ease-out 0.5s;
+}
+
+/* Performance optimizations for animations */
+.reduce-motion {
+    animation-duration: 0.1s !important;
+    animation-iteration-count: 1 !important;
+}
+
+/* Accessibility: Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .flicker-text,
+    .glitch-text,
+    .system-alert,
+    .system-critical {
+        animation: none !important;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    #corruption-fill {
+        background: linear-gradient(90deg, #00FF00 0%, #FFFF00 50%, #FF0000 100%);
+    }
+    
+    .status-indicator.active {
+        background: #00FF00;
+        box-shadow: 0 0 10px #00FF00;
+    }
+    
+    .status-indicator.warning {
+        background: #FFFF00;
+        box-shadow: 0 0 10px #FFFF00;
+    }
+    
+    .status-indicator.error {
+        background: #FF0000;
+        box-shadow: 0 0 10px #FF0000;
+    }
+}
