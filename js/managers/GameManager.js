@@ -27,6 +27,7 @@ export class GameManager {
         
         // Animation frame reference
         this.animationFrameId = null;
+        this.lastFrameTime = 0;
         
         // Background image
         this.backgroundImage = null;
@@ -297,8 +298,14 @@ export class GameManager {
                         }
                         
                         // Update UI if available
-                        if (this.uiManager && typeof this.uiManager.updatePhaseDisplay === 'function') {
-                            this.uiManager.updatePhaseDisplay(newPhase);
+                        if (this.uiManager && typeof this.uiManager.updatePhase === 'function') {
+                            this.uiManager.updatePhase(newPhase);
+                        }
+                        
+                        // Update phase timer
+                        if (this.uiManager && typeof this.uiManager.updatePhaseTimer === 'function') {
+                            const timeRemaining = Math.ceil(this.phaseManager.getPhaseTimeRemaining() / 1000);
+                            this.uiManager.updatePhaseTimer(timeRemaining);
                         }
                         
                         // Update data stream generator if available
@@ -515,6 +522,7 @@ export class GameManager {
             this.gameState = 'playing';
             this.gameStartTime = Date.now();
             this.totalPausedDuration = 0;
+            this.lastFrameTime = 0; // Reset frame timing
             
             // Start game loop
             try {
@@ -721,6 +729,10 @@ export class GameManager {
             const currentTime = Date.now();
             const elapsedTime = currentTime - this.gameStartTime - this.totalPausedDuration;
             
+            // Calculate delta time for frame-based updates
+            const deltaTime = this.lastFrameTime ? currentTime - this.lastFrameTime : 16; // Default to ~60fps
+            this.lastFrameTime = currentTime;
+            
             // Check for maximum game duration
             if (elapsedTime >= GAME_CONSTANTS.MAX_GAME_DURATION) {
                 this.endGame(GameEndType.SUCCESS);
@@ -738,7 +750,7 @@ export class GameManager {
 
             try {
                 if (this.dataStreamGenerator && typeof this.dataStreamGenerator.update === 'function') {
-                    this.dataStreamGenerator.update();
+                    this.dataStreamGenerator.update(deltaTime);
                 }
             } catch (streamError) {
                 console.error('Error updating data stream generator:', streamError);
@@ -767,7 +779,7 @@ export class GameManager {
                 console.error('Error rendering game:', renderError);
             }
             
-            // Update UI with current corruption level
+            // Update UI with current corruption level and timers
             try {
                 if (this.uiManager) {
                     if (this.corruptionSystem && typeof this.corruptionSystem.getCurrentCorruption === 'function') {
@@ -775,6 +787,11 @@ export class GameManager {
                     }
                     if (typeof this.uiManager.updateTimer === 'function') {
                         this.uiManager.updateTimer(elapsedTime);
+                    }
+                    // Update phase timer
+                    if (this.phaseManager && typeof this.uiManager.updatePhaseTimer === 'function') {
+                        const timeRemaining = Math.ceil(this.phaseManager.getPhaseTimeRemaining() / 1000);
+                        this.uiManager.updatePhaseTimer(timeRemaining);
                     }
                 }
             } catch (uiError) {
@@ -894,6 +911,7 @@ export class GameManager {
         this.gameStartTime = 0;
         this.pausedTime = 0;
         this.totalPausedDuration = 0;
+        this.lastFrameTime = 0;
         this.stopGameLoop();
     }
 

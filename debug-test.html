@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Test</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #000000;
+            color: #00FF41;
+            padding: 20px;
+        }
+        
+        .debug-info {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #00FF41;
+            background: rgba(0, 255, 65, 0.1);
+        }
+        
+        button {
+            background: #00BFFF;
+            color: black;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>Human Firewall Debug Test</h1>
+    
+    <div class="debug-info">
+        <h3>Game System Status:</h3>
+        <div id="status">Loading...</div>
+    </div>
+    
+    <div class="debug-info">
+        <h3>Controls:</h3>
+        <button onclick="testGameStart()">Test Game Start</button>
+        <button onclick="testPhaseManager()">Test Phase Manager</button>
+        <button onclick="testDataStream()">Test Data Stream</button>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+    
+    <div class="debug-info">
+        <h3>Debug Log:</h3>
+        <div id="log" style="height: 300px; overflow-y: scroll; background: rgba(0,0,0,0.5); padding: 10px;"></div>
+    </div>
+    
+    <script type="module">
+        import { GameManager } from './js/managers/GameManager.js';
+        import { PhaseManager } from './js/managers/PhaseManager.js';
+        import { DataStreamGenerator } from './js/managers/DataStreamGenerator.js';
+        import { CorruptionSystem } from './js/managers/CorruptionSystem.js';
+        import { UIManager } from './js/ui/UIManager.js';
+        import { ContentProvider } from './js/content/ContentProvider.js';
+        import { SpawnSettings, PhaseSettings } from './js/core/dataClasses.js';
+        
+        let gameManager;
+        let phaseManager;
+        let dataStreamGenerator;
+        let uiManager;
+        
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${time}] ${message}<br>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+        
+        window.clearLog = function() {
+            document.getElementById('log').innerHTML = '';
+        };
+        
+        window.testGameStart = async function() {
+            log('Testing game start...');
+            try {
+                if (gameManager && gameManager.isInitialized) {
+                    await gameManager.startGame();
+                    log('✓ Game started successfully');
+                } else {
+                    log('✗ GameManager not initialized');
+                }
+            } catch (error) {
+                log('✗ Game start failed: ' + error.message);
+            }
+        };
+        
+        window.testPhaseManager = function() {
+            log('Testing phase manager...');
+            if (phaseManager) {
+                log(`Current phase: ${phaseManager.getCurrentPhase()}`);
+                log(`Phase number: ${phaseManager.getPhaseNumber()}`);
+                log(`Time remaining: ${Math.ceil(phaseManager.getPhaseTimeRemaining() / 1000)}s`);
+                log('✓ Phase manager working');
+            } else {
+                log('✗ Phase manager not available');
+            }
+        };
+        
+        window.testDataStream = function() {
+            log('Testing data stream generator...');
+            if (dataStreamGenerator) {
+                log(`Active objects: ${dataStreamGenerator.getActiveObjectCount()}`);
+                log(`Is active: ${dataStreamGenerator.isActive}`);
+                log('✓ Data stream generator working');
+            } else {
+                log('✗ Data stream generator not available');
+            }
+        };
+        
+        async function initializeDebugTest() {
+            log('Initializing debug test...');
+            
+            try {
+                // Create canvas element
+                const canvas = document.createElement('canvas');
+                canvas.id = 'game-canvas';
+                canvas.width = 800;
+                canvas.height = 600;
+                canvas.style.display = 'none';
+                document.body.appendChild(canvas);
+                
+                // Initialize systems
+                const contentProvider = new ContentProvider();
+                await contentProvider.loadContent();
+                
+                const phaseSettings = new PhaseSettings(15000, 120000, 1.2);
+                phaseManager = new PhaseManager(phaseSettings);
+                
+                const spawnSettings = new SpawnSettings(500, 1000, 15, 2.0);
+                dataStreamGenerator = new DataStreamGenerator(contentProvider, phaseManager, spawnSettings);
+                dataStreamGenerator.setScreenDimensions(800, 600);
+                
+                const corruptionSystem = new CorruptionSystem(100);
+                uiManager = new UIManager();
+                
+                gameManager = new GameManager();
+                gameManager.initialize({
+                    phaseManager,
+                    dataStreamGenerator,
+                    corruptionSystem,
+                    uiManager,
+                    canvas
+                });
+                
+                log('✓ All systems initialized successfully');
+                document.getElementById('status').textContent = 'Ready for testing';
+                
+            } catch (error) {
+                log('✗ Initialization failed: ' + error.message);
+                document.getElementById('status').textContent = 'Initialization failed';
+            }
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', initializeDebugTest);
+    </script>
+</body>
+</html>
