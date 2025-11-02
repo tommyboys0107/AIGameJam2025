@@ -29,7 +29,15 @@
     "assets/images/backup_schedule.png",
     "assets/images/security_scan.png",
     "assets/images/performance_metric.png",
-    "assets/images/data_flow.png"
+    "assets/images/data_flow.png",
+    "assets/images/Safe1.jpg",
+    "assets/images/Safe2.jpg",
+    "assets/images/Safe3.jpg",
+    "assets/images/Safe4.jpg",
+    "assets/images/Safe5.jpg",
+    "assets/images/Safe6.jpg",
+    "assets/images/Safe7.jpg",
+    "assets/images/Safe8.jpg"
   ],
   "corrupted": [
     "assets/images/glitched_network.png",
@@ -61,6 +69,15 @@
     "assets/images/backup_corruption.png",
     "assets/images/security_breach.png",
     "assets/images/performance_crash.png",
-    "assets/images/data_corruption.png"
+    "assets/images/data_corruption.png",
+    "assets/images/Corrupted1.jpg",
+    "assets/images/Corrupted2.jpg",
+    "assets/images/Corrupted3.jpg",
+    "assets/images/Corrupted4.jpg",
+    "assets/images/Corrupted5.jpg",
+    "assets/images/Corrupted6.jpg",
+    "assets/images/Corrupted7.jpg",
+    "assets/images/Corrupted8.jpg",
+    "assets/images/Corrupted9.jpg"
   ]
 }
