@@ -1,8 +1,246 @@
-// Content Provider - placeholder for future implementation
-// This will manage content loading and distribution
+// Content Provider - manages content loading and distribution
+// Loads content from JSON configuration files and provides content based on phase and corruption status
+
+import { ContentType, GamePhase } from '../core/constants.js';
+import { InformationObjectData } from '../core/dataClasses.js';
 
 export class ContentProvider {
     constructor() {
-        // Content Provider implementation will be added in later tasks
+        this.textContent = null;
+        this.imageContent = null;
+        this.codeContent = null;
+        this.isLoaded = false;
+    }
+
+    /**
+     * Async method to load all content configurations from JSON files
+     * @returns {Promise<void>}
+     */
+    async loadContentConfigurations() {
+        try {
+            // Load all content configuration files in parallel
+            const [textResponse, imageResponse, codeResponse] = await Promise.all([
+                fetch('data/textContent.json'),
+                fetch('data/imageContent.json'),
+                fetch('data/codeContent.json')
+            ]);
+
+            // Parse JSON responses
+            this.textContent = await textResponse.json();
+            this.imageContent = await imageResponse.json();
+            this.codeContent = await codeResponse.json();
+
+            // Validate loaded content
+            this.validateContent();
+            
+            this.isLoaded = true;
+            console.log('Content configurations loaded successfully');
+        } catch (error) {
+            console.error('Failed to load content configurations:', error);
+            this.setupFallbackContent();
+        }
+    }
+
+    /**
+     * Validates that all required content arrays exist and have content
+     * @private
+     */
+    validateContent() {
+        const requiredArrays = [
+            { content: this.textContent, name: 'textContent' },
+            { content: this.imageContent, name: 'imageContent' },
+            { content: this.codeContent, name: 'codeContent' }
+        ];
+
+        for (const { content, name } of requiredArrays) {
+            if (!content || !content.legitimate || !content.corrupted) {
+                throw new Error(`Invalid ${name}: missing legitimate or corrupted arrays`);
+            }
+            if (content.legitimate.length === 0 || content.corrupted.length === 0) {
+                throw new Error(`Invalid ${name}: empty legitimate or corrupted arrays`);
+            }
+        }
+    }
+
+    /**
+     * Sets up fallback content if loading fails
+     * @private
+     */
+    setupFallbackContent() {
+        console.warn('Using fallback content due to loading failure');
+        
+        this.textContent = {
+            legitimate: ['System operational', 'Connection established', 'Data validated'],
+            corrupted: ['System 0p3r@t!0n@l', 'Connection 3st@bl!sh3d', 'Data v@l!d@t3d']
+        };
+
+        this.imageContent = {
+            legitimate: ['assets/images/default.png'],
+            corrupted: ['assets/images/error.png']
+        };
+
+        this.codeContent = {
+            legitimate: ['function test() { return true; }'],
+            corrupted: ['function test() { return true }']
+        };
+
+        this.isLoaded = true;
+    }
+
+    /**
+     * Retrieves random content based on current phase and corruption status
+     * @param {string} phase - Current game phase (GamePhase enum value)
+     * @param {boolean} isCorrupted - Whether to return corrupted content
+     * @returns {InformationObjectData} Content object for the information object
+     */
+    getRandomContent(phase, isCorrupted = false) {
+        if (!this.isLoaded) {
+            console.warn('Content not loaded, using fallback');
+            this.setupFallbackContent();
+        }
+
+        let contentType;
+        let contentArray;
+        let contentText = '';
+        let contentImage = null;
+
+        // Determine content type based on phase
+        switch (phase) {
+            case GamePhase.TEXT:
+                contentType = ContentType.TEXT;
+                contentArray = isCorrupted ? this.textContent.corrupted : this.textContent.legitimate;
+                contentText = this.getRandomFromArray(contentArray);
+                break;
+            
+            case GamePhase.ART:
+                contentType = ContentType.IMAGE;
+                contentArray = isCorrupted ? this.imageContent.corrupted : this.imageContent.legitimate;
+                contentImage = this.getRandomFromArray(contentArray);
+                break;
+            
+            case GamePhase.CODE:
+                contentType = ContentType.CODE;
+                contentArray = isCorrupted ? this.codeContent.corrupted : this.codeContent.legitimate;
+                contentText = this.getRandomFromArray(contentArray);
+                break;
+            
+            default:
+                console.warn(`Unknown phase: ${phase}, defaulting to TEXT`);
+                contentType = ContentType.TEXT;
+                contentArray = isCorrupted ? this.textContent.corrupted : this.textContent.legitimate;
+                contentText = this.getRandomFromArray(contentArray);
+        }
+
+        // Determine display color based on corruption status
+        const displayColor = isCorrupted ? '#FF4444' : '#00FF41';
+
+        return new InformationObjectData(
+            contentType,
+            contentText,
+            contentImage,
+            isCorrupted,
+            isCorrupted ? Math.random() * 0.5 + 0.5 : 0, // Corruption severity 0.5-1.0 for corrupted, 0 for legitimate
+            displayColor
+        );
+    }
+
+    /**
+     * Gets a random element from an array
+     * @param {Array} array - Array to select from
+     * @returns {*} Random element from the array
+     * @private
+     */
+    getRandomFromArray(array) {
+        if (!array || array.length === 0) {
+            console.warn('Empty array provided to getRandomFromArray');
+            return '';
+        }
+        return array[Math.floor(Math.random() * array.length)];
+    }
+
+    /**
+     * Gets content for a specific content type and corruption status
+     * @param {string} contentType - ContentType enum value
+     * @param {boolean} isCorrupted - Whether to return corrupted content
+     * @returns {InformationObjectData} Content object
+     */
+    getContentByType(contentType, isCorrupted = false) {
+        if (!this.isLoaded) {
+            console.warn('Content not loaded, using fallback');
+            this.setupFallbackContent();
+        }
+
+        let contentArray;
+        let contentText = '';
+        let contentImage = null;
+
+        switch (contentType) {
+            case ContentType.TEXT:
+                contentArray = isCorrupted ? this.textContent.corrupted : this.textContent.legitimate;
+                contentText = this.getRandomFromArray(contentArray);
+                break;
+            
+            case ContentType.IMAGE:
+                contentArray = isCorrupted ? this.imageContent.corrupted : this.imageContent.legitimate;
+                contentImage = this.getRandomFromArray(contentArray);
+                break;
+            
+            case ContentType.CODE:
+                contentArray = isCorrupted ? this.codeContent.corrupted : this.codeContent.legitimate;
+                contentText = this.getRandomFromArray(contentArray);
+                break;
+            
+            default:
+                console.warn(`Unknown content type: ${contentType}`);
+                return null;
+        }
+
+        const displayColor = isCorrupted ? '#FF4444' : '#00FF41';
+
+        return new InformationObjectData(
+            contentType,
+            contentText,
+            contentImage,
+            isCorrupted,
+            isCorrupted ? Math.random() * 0.5 + 0.5 : 0,
+            displayColor
+        );
+    }
+
+    /**
+     * Checks if content is loaded and ready
+     * @returns {boolean} True if content is loaded
+     */
+    isContentLoaded() {
+        return this.isLoaded;
+    }
+
+    /**
+     * Gets the count of available content for a specific type and corruption status
+     * @param {string} contentType - ContentType enum value
+     * @param {boolean} isCorrupted - Whether to count corrupted content
+     * @returns {number} Number of available content items
+     */
+    getContentCount(contentType, isCorrupted = false) {
+        if (!this.isLoaded) {
+            return 0;
+        }
+
+        let contentArray;
+        switch (contentType) {
+            case ContentType.TEXT:
+                contentArray = isCorrupted ? this.textContent.corrupted : this.textContent.legitimate;
+                break;
+            case ContentType.IMAGE:
+                contentArray = isCorrupted ? this.imageContent.corrupted : this.imageContent.legitimate;
+                break;
+            case ContentType.CODE:
+                contentArray = isCorrupted ? this.codeContent.corrupted : this.codeContent.legitimate;
+                break;
+            default:
+                return 0;
+        }
+
+        return contentArray ? contentArray.length : 0;
     }
 }

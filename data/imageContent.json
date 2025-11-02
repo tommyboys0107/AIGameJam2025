@@ -1,0 +1,36 @@
+{
+  "legitimate": [
+    "assets/images/network_diagram.png",
+    "assets/images/server_status.png",
+    "assets/images/user_profile.png",
+    "assets/images/security_badge.png",
+    "assets/images/data_chart.png",
+    "assets/images/system_monitor.png",
+    "assets/images/file_icon.png",
+    "assets/images/database_icon.png",
+    "assets/images/shield_icon.png",
+    "assets/images/lock_icon.png",
+    "assets/images/check_mark.png",
+    "assets/images/green_light.png",
+    "assets/images/progress_bar.png",
+    "assets/images/connection_icon.png",
+    "assets/images/backup_icon.png"
+  ],
+  "corrupted": [
+    "assets/images/glitched_network.png",
+    "assets/images/error_status.png",
+    "assets/images/corrupted_profile.png",
+    "assets/images/broken_badge.png",
+    "assets/images/distorted_chart.png",
+    "assets/images/static_monitor.png",
+    "assets/images/broken_file.png",
+    "assets/images/corrupted_database.png",
+    "assets/images/cracked_shield.png",
+    "assets/images/broken_lock.png",
+    "assets/images/error_mark.png",
+    "assets/images/red_light.png",
+    "assets/images/broken_progress.png",
+    "assets/images/disconnected_icon.png",
+    "assets/images/failed_backup.png"
+  ]
+}

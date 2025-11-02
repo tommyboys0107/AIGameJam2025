@@ -1,0 +1,26 @@
+{
+  "legitimate": [
+    "function authenticate(user) {\n  return user.isValid();\n}",
+    "const result = database.query('SELECT * FROM users');\nif (result.success) {\n  console.log('Query successful');\n}",
+    "class SecurityManager {\n  constructor() {\n    this.level = 'high';\n  }\n}",
+    "try {\n  const data = await fetchData();\n  return data;\n} catch (error) {\n  console.error(error);\n}",
+    "const config = {\n  timeout: 5000,\n  retries: 3,\n  secure: true\n};",
+    "function validateInput(input) {\n  return input && input.length > 0;\n}",
+    "const users = [\n  { id: 1, name: 'Alice' },\n  { id: 2, name: 'Bob' }\n];",
+    "if (user.hasPermission('read')) {\n  return file.content;\n}",
+    "const encrypted = encrypt(data, key);\nstore(encrypted);",
+    "function logEvent(event) {\n  console.log(`[${new Date()}] ${event}`);\n}"
+  ],
+  "corrupted": [
+    "function authenticate(user) {\n  return user.isValid(\n}",
+    "const result = database.query('SELECT * FROM users');\nif (result.success {\n  console.log('Query successful');\n}",
+    "class SecurityManager {\n  constructor() {\n    this.level = 'high'\n  \n}",
+    "try {\n  const data = await fetchData();\n  return data\n} catch (error) {\n  console.error(error);\n",
+    "const config = {\n  timeout: 5000,\n  retries: 3\n  secure: true\n};",
+    "function validateInput(input) {\n  return input && input.length > 0\n",
+    "const users = [\n  { id: 1, name: 'Alice' },\n  { id: 2, name: 'Bob' }\n;",
+    "if (user.hasPermission('read') {\n  return file.content;\n}",
+    "const encrypted = encrypt(data, key)\nstore(encrypted);",
+    "function logEvent(event) {\n  console.log(`[${new Date()}] ${event}`)\n"
+  ]
+}
