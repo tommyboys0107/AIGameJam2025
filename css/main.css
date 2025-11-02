@@ -48,6 +48,12 @@ body {
     background-color: #000000;
     z-index: 1;
     display: block;
+    pointer-events: auto;
+    cursor: crosshair;
+    margin: 0;
+    padding: 0;
+    border: none;
+    outline: none;
 }
 
 /* Game screen layout - Full screen */
@@ -232,6 +238,17 @@ h1 {
     height: 100%;
     pointer-events: none;
     z-index: 50;
+}
+
+/* Ensure HUD doesn't block canvas clicks */
+#hud * {
+    pointer-events: none;
+}
+
+/* Only allow pointer events on interactive HUD elements */
+#hud button,
+#hud .interactive {
+    pointer-events: auto;
 }
 
 /* Grid overlay for retro aesthetic */

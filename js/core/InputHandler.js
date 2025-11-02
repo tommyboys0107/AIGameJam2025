@@ -205,14 +205,21 @@ export class InputHandler {
             this.updateCanvasBounds();
         }
 
+        // Get fresh canvas bounds to ensure accuracy
+        const rect = this.canvas.getBoundingClientRect();
+        
         // Get mouse position relative to canvas
-        const rect = this.canvasBounds;
         const clientX = event.clientX - rect.left;
         const clientY = event.clientY - rect.top;
 
-        // Apply scaling transformation
-        const canvasX = clientX * this.scaleX;
-        const canvasY = clientY * this.scaleY;
+        // For full-screen canvas, the scaling should be 1:1
+        // Since canvas width/height should match the viewport
+        const canvasX = clientX * (this.canvas.width / rect.width);
+        const canvasY = clientY * (this.canvas.height / rect.height);
+
+        // Debug logging for coordinate conversion
+        console.log(`Click conversion: client(${event.clientX}, ${event.clientY}) -> relative(${clientX.toFixed(1)}, ${clientY.toFixed(1)}) -> canvas(${canvasX.toFixed(1)}, ${canvasY.toFixed(1)})`);
+        console.log(`Canvas: ${this.canvas.width}x${this.canvas.height}, Rect: ${rect.width.toFixed(1)}x${rect.height.toFixed(1)}`);
 
         return { x: canvasX, y: canvasY };
     }
@@ -223,6 +230,7 @@ export class InputHandler {
      */
     updateCanvasBounds() {
         if (!this.canvas) {
+            console.warn('Cannot update canvas bounds: canvas is null');
             return;
         }
 
@@ -232,7 +240,17 @@ export class InputHandler {
         this.scaleX = this.canvas.width / this.canvasBounds.width;
         this.scaleY = this.canvas.height / this.canvasBounds.height;
         
-        console.log(`Canvas bounds updated: ${this.canvasBounds.width}x${this.canvasBounds.height}, scale: ${this.scaleX.toFixed(2)}x${this.scaleY.toFixed(2)}`);
+        console.log(`Canvas bounds updated:`);
+        console.log(`  Internal: ${this.canvas.width}x${this.canvas.height}`);
+        console.log(`  Bounds: ${this.canvasBounds.width.toFixed(1)}x${this.canvasBounds.height.toFixed(1)}`);
+        console.log(`  Position: (${this.canvasBounds.left.toFixed(1)}, ${this.canvasBounds.top.toFixed(1)})`);
+        console.log(`  Scale: ${this.scaleX.toFixed(3)}x${this.scaleY.toFixed(3)}`);
+        
+        // Warn if scaling is not 1:1
+        if (Math.abs(this.scaleX - 1) > 0.01 || Math.abs(this.scaleY - 1) > 0.01) {
+            console.warn('Canvas scaling detected! This may cause click coordinate issues.');
+            console.warn('Consider setting canvas CSS size to match internal dimensions.');
+        }
     }
 
     /**

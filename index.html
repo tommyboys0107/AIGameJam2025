@@ -237,21 +237,28 @@
                 return;
             }
 
-            // Full screen canvas setup - use entire viewport
-            const containerWidth = window.innerWidth;
-            const containerHeight = window.innerHeight;
+            // Get exact viewport dimensions
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
             
-            // Set canvas to full screen dimensions
-            const canvasWidth = containerWidth;
-            const canvasHeight = containerHeight;
+            console.log(`Setting up canvas for viewport: ${viewportWidth}x${viewportHeight}`);
             
-            // Set canvas dimensions to full screen
-            canvas.width = Math.floor(canvasWidth);
-            canvas.height = Math.floor(canvasHeight);
+            // Set canvas internal dimensions to match viewport exactly
+            canvas.width = viewportWidth;
+            canvas.height = viewportHeight;
             
-            // Set CSS dimensions for proper scaling
-            canvas.style.width = canvas.width + 'px';
-            canvas.style.height = canvas.height + 'px';
+            // Set CSS dimensions to match internal dimensions exactly (1:1 ratio)
+            canvas.style.width = viewportWidth + 'px';
+            canvas.style.height = viewportHeight + 'px';
+            
+            // Ensure canvas is properly positioned and clickable
+            canvas.style.position = 'fixed';
+            canvas.style.top = '0px';
+            canvas.style.left = '0px';
+            canvas.style.zIndex = '1';
+            canvas.style.pointerEvents = 'auto';
+            canvas.style.cursor = 'crosshair';
+            canvas.style.display = 'block';
             
             // Configure canvas context for crisp rendering
             const ctx = canvas.getContext('2d');
@@ -287,7 +294,11 @@
             // Store boundaries on canvas for access by other systems
             canvas.spawnBoundaries = spawnBoundaries;
             
-            console.log(`Canvas configured: ${canvas.width}x${canvas.height}, boundaries:`, spawnBoundaries);
+            console.log(`Canvas configured: internal(${canvas.width}x${canvas.height}), CSS(${canvas.style.width}x${canvas.style.height})`);
+            
+            // Verify the canvas bounds
+            const rect = canvas.getBoundingClientRect();
+            console.log(`Canvas bounds: ${rect.width}x${rect.height} at (${rect.left}, ${rect.top})`);
             
             return canvas;
         }
@@ -321,9 +332,129 @@
             };
         }
 
+        // Debug function to test click functionality
+        function testCanvasClicks() {
+            const canvas = document.getElementById('game-canvas');
+            if (!canvas) {
+                console.log('Canvas not found');
+                return;
+            }
+            
+            console.log('Canvas element:', canvas);
+            console.log('Canvas dimensions:', canvas.width, 'x', canvas.height);
+            console.log('Canvas style:', canvas.style.cssText);
+            
+            // Add a visual click indicator
+            const ctx = canvas.getContext('2d');
+            
+            // Add a simple click test with visual feedback
+            const testHandler = (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const clientX = e.clientX - rect.left;
+                const clientY = e.clientY - rect.top;
+                const canvasX = clientX * (canvas.width / rect.width);
+                const canvasY = clientY * (canvas.height / rect.height);
+                
+                console.log('✓ Canvas click test:', {
+                    screen: `(${e.clientX}, ${e.clientY})`,
+                    relative: `(${clientX.toFixed(1)}, ${clientY.toFixed(1)})`,
+                    canvas: `(${canvasX.toFixed(1)}, ${canvasY.toFixed(1)})`,
+                    canvasSize: `${canvas.width}x${canvas.height}`,
+                    rectSize: `${rect.width.toFixed(1)}x${rect.height.toFixed(1)}`
+                });
+                
+                // Draw a visual indicator at the click position
+                if (ctx) {
+                    ctx.fillStyle = '#00BFFF';
+                    ctx.beginPath();
+                    ctx.arc(canvasX, canvasY, 10, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#FFF';
+                    ctx.font = '12px Courier New';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`(${canvasX.toFixed(0)}, ${canvasY.toFixed(0)})`, canvasX, canvasY - 15);
+                }
+            };
+            
+            canvas.addEventListener('click', testHandler);
+            console.log('Click test handler added. Click anywhere on the canvas to see coordinates.');
+            
+            // Remove test handler after 15 seconds
+            setTimeout(() => {
+                canvas.removeEventListener('click', testHandler);
+                console.log('Click test handler removed');
+            }, 15000);
+        }
+
+        // Make test function available globally for debugging
+        window.testCanvasClicks = testCanvasClicks;
+
+        // Diagnostic function to check game state
+        function diagnoseClickIssue() {
+            console.log('=== CLICK ISSUE DIAGNOSIS ===');
+            
+            const canvas = document.getElementById('game-canvas');
+            console.log('Canvas element:', canvas);
+            
+            if (canvas) {
+                const rect = canvas.getBoundingClientRect();
+                console.log('Canvas internal dimensions:', canvas.width, 'x', canvas.height);
+                console.log('Canvas CSS dimensions:', canvas.style.width, 'x', canvas.style.height);
+                console.log('Canvas computed dimensions:', rect.width, 'x', rect.height);
+                console.log('Canvas position:', rect.left, ',', rect.top);
+                console.log('Canvas style:', canvas.style.cssText);
+                console.log('Canvas computed style pointer-events:', window.getComputedStyle(canvas).pointerEvents);
+                console.log('Canvas z-index:', window.getComputedStyle(canvas).zIndex);
+                
+                // Test coordinate conversion
+                const centerX = window.innerWidth / 2;
+                const centerY = window.innerHeight / 2;
+                const canvasX = (centerX - rect.left) * (canvas.width / rect.width);
+                const canvasY = (centerY - rect.top) * (canvas.height / rect.height);
+                console.log(`Screen center (${centerX}, ${centerY}) -> Canvas (${canvasX.toFixed(1)}, ${canvasY.toFixed(1)})`);
+            }
+            
+            console.log('Viewport dimensions:', window.innerWidth, 'x', window.innerHeight);
+            console.log('Game manager initialized:', gameSystemsInitialized);
+            console.log('Game manager:', gameManager);
+            
+            if (gameManager) {
+                console.log('Game state:', gameManager.getGameState());
+                console.log('Input handler:', gameManager.inputHandler);
+                
+                if (gameManager.inputHandler) {
+                    console.log('Input handler enabled:', gameManager.inputHandler.isEnabled);
+                    console.log('Input handler stats:', gameManager.inputHandler.getStats());
+                }
+            }
+            
+            // Check for overlapping elements
+            const elementsAtCenter = document.elementsFromPoint(window.innerWidth / 2, window.innerHeight / 2);
+            console.log('Elements at screen center:', elementsAtCenter.map(el => el.tagName + (el.id ? '#' + el.id : '') + (el.className ? '.' + el.className : '')));
+            
+            console.log('=== END DIAGNOSIS ===');
+        }
+        
+        window.diagnoseClickIssue = diagnoseClickIssue;
+
         // Simple start button handler first
         document.addEventListener('DOMContentLoaded', () => {
             console.log('DOM loaded, setting up start button...');
+            
+            // Pre-setup canvas to ensure it's ready for clicks
+            const canvas = document.getElementById('game-canvas');
+            if (canvas) {
+                setupGameCanvas(canvas);
+                console.log('Canvas pre-configured on DOM load');
+                
+                // Add a basic click test to verify canvas is working
+                canvas.addEventListener('click', function basicClickTest(e) {
+                    console.log('✓ Canvas basic click test passed!', e.clientX, e.clientY);
+                    // Remove this test handler after first click
+                    canvas.removeEventListener('click', basicClickTest);
+                });
+            }
             
             // Set up start button immediately
             const startButton = document.getElementById('start-game-button');
@@ -539,7 +670,33 @@
                                 startFirewallButton.onclick = async () => {
                                     try {
                                         instructionsOverlay.classList.add('hidden');
+                                        
+                                        // Ensure canvas is properly set up and clickable
+                                        const canvas = document.getElementById('game-canvas');
+                                        if (canvas) {
+                                            setupGameCanvas(canvas);
+                                            console.log('Canvas re-configured for game start');
+                                        }
+                                        
                                         await gameManager.startGame();
+                                        
+                                        // Force enable input handler after game start
+                                        if (gameManager.inputHandler) {
+                                            gameManager.inputHandler.enable();
+                                            console.log('InputHandler force-enabled after game start');
+                                            
+                                            // Add a temporary click test
+                                            const canvas = document.getElementById('game-canvas');
+                                            if (canvas) {
+                                                const testClickHandler = (e) => {
+                                                    console.log('Canvas click test successful!', e.clientX, e.clientY);
+                                                    canvas.removeEventListener('click', testClickHandler);
+                                                };
+                                                canvas.addEventListener('click', testClickHandler);
+                                                console.log('Temporary click test handler added');
+                                            }
+                                        }
+                                        
                                     } catch (error) {
                                         console.error('Error starting game:', error);
                                         showGameError('Failed to start game: ' + error.message);

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas Click Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            color: #00FF41;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+        }
+        
+        #test-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            cursor: crosshair;
+            pointer-events: auto;
+            z-index: 1;
+        }
+        
+        #info {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            border: 1px solid #00FF41;
+            z-index: 100;
+            pointer-events: none;
+        }
+        
+        #log {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            height: 200px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #00FF41;
+            padding: 10px;
+            overflow-y: scroll;
+            z-index: 100;
+            pointer-events: none;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="test-canvas"></canvas>
+    
+    <div id="info">
+        <div>Canvas Click Test</div>
+        <div>Canvas Size: <span id="canvas-size">-</span></div>
+        <div>Mouse Position: <span id="mouse-pos">-</span></div>
+        <div>Click Count: <span id="click-count">0</span></div>
+    </div>
+    
+    <div id="log">
+        <div>Click anywhere on the canvas to test...</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('test-canvas');
+        const ctx = canvas.getContext('2d');
+        const log = document.getElementById('log');
+        const canvasSizeSpan = document.getElementById('canvas-size');
+        const mousePosSpan = document.getElementById('mouse-pos');
+        const clickCountSpan = document.getElementById('click-count');
+        
+        let clickCount = 0;
+        
+        function logMessage(message) {
+            const time = new Date().toLocaleTimeString();
+            const div = document.createElement('div');
+            div.textContent = `[${time}] ${message}`;
+            log.appendChild(div);
+            log.scrollTop = log.scrollHeight;
+            console.log(message);
+        }
+        
+        function setupCanvas() {
+            // Set canvas to full screen
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            canvasSizeSpan.textContent = `${canvas.width}x${canvas.height}`;
+            
+            // Clear canvas
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw grid
+            ctx.strokeStyle = '#00FF41';
+            ctx.lineWidth = 1;
+            ctx.globalAlpha = 0.2;
+            
+            for (let x = 0; x < canvas.width; x += 50) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            
+            for (let y = 0; y < canvas.height; y += 50) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+            
+            ctx.globalAlpha = 1;
+            
+            // Draw instructions
+            ctx.fillStyle = '#00FF41';
+            ctx.font = '20px Courier New';
+            ctx.textAlign = 'center';
+            ctx.fillText('Click anywhere to test canvas interaction', canvas.width / 2, canvas.height / 2);
+            
+            logMessage('Canvas setup complete');
+        }
+        
+        function drawClickIndicator(x, y) {
+            ctx.fillStyle = '#00BFFF';
+            ctx.beginPath();
+            ctx.arc(x, y, 20, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#FFF';
+            ctx.font = '12px Courier New';
+            ctx.textAlign = 'center';
+            ctx.fillText(clickCount.toString(), x, y + 4);
+            
+            // Fade out after 2 seconds
+            setTimeout(() => {
+                setupCanvas();
+            }, 2000);
+        }
+        
+        // Set up event listeners
+        canvas.addEventListener('click', (e) => {
+            clickCount++;
+            clickCountSpan.textContent = clickCount;
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            logMessage(`Click ${clickCount}: (${x.toFixed(1)}, ${y.toFixed(1)})`);
+            drawClickIndicator(x, y);
+        });
+        
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            mousePosSpan.textContent = `(${x.toFixed(0)}, ${y.toFixed(0)})`;
+        });
+        
+        window.addEventListener('resize', () => {
+            logMessage('Window resized, updating canvas...');
+            setupCanvas();
+        });
+        
+        // Initialize
+        setupCanvas();
+        logMessage('Canvas click test initialized');
+        
+        // Test if canvas is properly set up
+        logMessage(`Canvas element: ${canvas ? 'Found' : 'Not found'}`);
+        logMessage(`Canvas context: ${ctx ? 'Available' : 'Not available'}`);
+        logMessage(`Canvas style: ${canvas.style.cssText || 'No inline styles'}`);
+        
+        // Add keyboard shortcut to reset
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'r' || e.key === 'R') {
+                clickCount = 0;
+                clickCountSpan.textContent = '0';
+                setupCanvas();
+                logMessage('Reset by keyboard');
+            }
+        });
+        
+        logMessage('Press R to reset. Click anywhere on the canvas to test interaction.');
+    </script>
+</body>
+</html>
+</content>

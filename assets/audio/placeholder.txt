@@ -1,2 +1,0 @@
-This directory will contain game audio files.
-Audio files will be added in later implementation tasks.
