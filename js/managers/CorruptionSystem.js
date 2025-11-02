@@ -13,7 +13,7 @@ export class CorruptionSystem {
             missedCorrupted: 15,    // Penalty for letting corrupted content through
             falsePositive: 8,       // Penalty for blocking legitimate content
             correctBlock: -2,       // Reward for correctly blocking corrupted content
-            correctAllow: -1        // Small reward for correctly allowing legitimate content
+            correctAllow: 0         // No reward for allowing legitimate content to pass through
         };
         
         // Event callbacks
