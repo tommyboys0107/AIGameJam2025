@@ -80,77 +80,71 @@ export class DataStreamGenerator {
     calculateSpawnPositions() {
         const positions = [];
         const targetMargin = 30; // Target margin for both sides
-        const maxObjectWidth = 600; // Maximum possible object width
+        // Use a more balanced approach for visual symmetry
+        // Instead of calculating based on max object width, distribute positions evenly
+        // and let the visual margins be determined by actual object sizes
         const numTopPositions = 6;
         
-        // Calculate positions to ensure exactly equal margins
-        // We want: leftMargin = rightMargin = targetMargin
-        // This means: firstObjectX = targetMargin
-        // And: lastObjectX + maxObjectWidth + targetMargin = screenWidth
-        // So: lastObjectX = screenWidth - targetMargin - maxObjectWidth
+        // Calculate available space for positioning (excluding margins)
+        const leftMargin = targetMargin;
+        const rightMargin = targetMargin;
+        const availableWidth = this.screenWidth - leftMargin - rightMargin;
         
-        const firstObjectX = targetMargin;
-        const lastObjectX = this.screenWidth - targetMargin - maxObjectWidth;
-        const totalSpread = lastObjectX - firstObjectX;
+        // For visual balance, we'll position objects so their centers are evenly distributed
+        // This creates more consistent visual spacing regardless of object size variations
+        const centerSpacing = availableWidth / (numTopPositions + 1); // +1 for equal spacing on sides
         
-        if (totalSpread < 0) {
-            console.warn('Screen too narrow for current object size and margins');
-            // Fallback: single position in center
+        // Calculate positions based on center distribution
+        for (let i = 0; i < numTopPositions; i++) {
+            // Calculate center position for this object
+            const centerX = leftMargin + centerSpacing * (i + 1);
+            
+            // Estimate object width (use average of typical sizes)
+            const estimatedObjectWidth = 320; // Slightly conservative average
+            
+            // Position object so its center aligns with the calculated center
+            const objectX = centerX - estimatedObjectWidth / 2;
+            
             positions.push({
-                x: this.screenWidth / 2 - maxObjectWidth / 2,
+                x: Math.max(leftMargin, objectX), // Ensure minimum left margin
                 y: -150,
                 edge: 'top'
             });
-        } else {
-            // Distribute positions evenly between first and last
-            for (let i = 0; i < numTopPositions; i++) {
-                let x;
-                if (numTopPositions === 1) {
-                    x = firstObjectX;
-                } else {
-                    // Linear interpolation between first and last position
-                    const ratio = i / (numTopPositions - 1);
-                    x = firstObjectX + (ratio * totalSpread);
-                }
-                
-                positions.push({
-                    x: x,
-                    y: -150, // Start well above screen
-                    edge: 'top'
-                });
-            }
         }
+
         
         console.log(`Generated ${positions.length} spawn positions (screen: ${this.screenWidth}x${this.screenHeight})`);
-        console.log(`Target margin: ${targetMargin}px (both sides)`);
+        console.log(`Target margin: ${targetMargin}px, Available width: ${availableWidth}px`);
+        console.log(`Center spacing: ${centerSpacing.toFixed(1)}px`);
         console.log(`Object positions: ${positions.map(p => p.x.toFixed(1)).join(', ')}`);
         
         if (positions.length > 0) {
-            // Verify margins are exactly equal by design
+            // Calculate the visual balance for different object types
             const leftmostX = positions[0].x;
             const rightmostX = positions[positions.length - 1].x;
-            const actualLeftMargin = leftmostX;
-            const actualRightMargin = this.screenWidth - (rightmostX + maxObjectWidth);
             
-            console.log(`📏 Margin verification:`);
-            console.log(`  Left margin: ${actualLeftMargin.toFixed(3)}px`);
-            console.log(`  Right margin: ${actualRightMargin.toFixed(3)}px`);
-            console.log(`  Difference: ${Math.abs(actualLeftMargin - actualRightMargin).toFixed(6)}px`);
-            console.log(`  Target was: ${targetMargin}px`);
+            // Check visual margins with typical object widths
+            const typicalWidths = [280, 320, 400]; // Text, Average, Image
+            const widthNames = ['Text', 'Average', 'Image'];
             
-            if (positions.length > 1) {
-                // Calculate spacing between positions
-                const spacings = [];
-                for (let i = 1; i < positions.length; i++) {
-                    spacings.push((positions[i].x - positions[i-1].x).toFixed(1));
-                }
-                console.log(`  Spacings: ${spacings.join(', ')}px`);
+            console.log(`📏 Visual margin analysis:`);
+            
+            typicalWidths.forEach((width, index) => {
+                const leftMargin = leftmostX;
+                const rightMargin = this.screenWidth - (rightmostX + width);
+                const marginDiff = Math.abs(leftMargin - rightMargin);
                 
-                // Show total spread
-                console.log(`  Total spread: ${totalSpread.toFixed(1)}px`);
-                console.log(`  First object at: ${firstObjectX}px`);
-                console.log(`  Last object at: ${lastObjectX}px`);
-            }
+                console.log(`  ${widthNames[index]} objects (${width}px):`);
+                console.log(`    Left margin: ${leftMargin.toFixed(1)}px`);
+                console.log(`    Right margin: ${rightMargin.toFixed(1)}px`);
+                console.log(`    Balance: ${marginDiff < 20 ? '✓ Good' : '⚠ Unbalanced'} (diff: ${marginDiff.toFixed(1)}px)`);
+            });
+            
+            // Show center positions for verification
+            console.log(`📍 Object centers: ${positions.map((p, i) => {
+                const centerX = leftMargin + centerSpacing * (i + 1);
+                return centerX.toFixed(1);
+            }).join(', ')}px`);
         }
         
         return positions;
@@ -803,6 +797,79 @@ export class DataStreamGenerator {
         }
         
         return this.currentMaxObjects;
+    }
+
+    /**
+     * Debug function to visualize spawn positions and margins
+     * @param {CanvasRenderingContext2D} ctx - Canvas rendering context
+     */
+    debugDrawSpawnPositions(ctx) {
+        if (!this.spawnPositions || this.spawnPositions.length === 0) return;
+        
+        ctx.save();
+        
+        // Draw spawn position indicators
+        ctx.strokeStyle = '#00BFFF';
+        ctx.fillStyle = 'rgba(0, 191, 255, 0.3)';
+        ctx.lineWidth = 2;
+        
+        const estimatedObjectWidth = 320; // Same as in calculateSpawnPositions
+        const targetMargin = 30;
+        
+        this.spawnPositions.forEach((pos, index) => {
+            // Draw spawn position rectangle with estimated object size
+            ctx.strokeRect(pos.x, pos.y + 150, estimatedObjectWidth, 100);
+            ctx.fillRect(pos.x, pos.y + 150, estimatedObjectWidth, 100);
+            
+            // Draw center line
+            const centerX = pos.x + estimatedObjectWidth / 2;
+            ctx.strokeStyle = '#FFFF00';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(centerX, pos.y + 150);
+            ctx.lineTo(centerX, pos.y + 250);
+            ctx.stroke();
+            
+            // Draw position label
+            ctx.fillStyle = '#00BFFF';
+            ctx.font = '14px Courier New';
+            ctx.textAlign = 'center';
+            ctx.fillText(`Pos ${index + 1}`, centerX, pos.y + 200);
+            ctx.fillText(`x: ${pos.x.toFixed(0)}`, centerX, pos.y + 220);
+            ctx.fillText(`center: ${centerX.toFixed(0)}`, centerX, pos.y + 240);
+        });
+        
+        // Draw margin indicators
+        ctx.strokeStyle = '#FF4444';
+        ctx.lineWidth = 3;
+        
+        // Left margin
+        ctx.beginPath();
+        ctx.moveTo(targetMargin, 100);
+        ctx.lineTo(targetMargin, this.screenHeight - 100);
+        ctx.stroke();
+        
+        // Right margin
+        const rightMarginX = this.screenWidth - targetMargin;
+        ctx.beginPath();
+        ctx.moveTo(rightMarginX, 100);
+        ctx.lineTo(rightMarginX, this.screenHeight - 100);
+        ctx.stroke();
+        
+        // Draw margin labels
+        ctx.fillStyle = '#FF4444';
+        ctx.font = '16px Courier New';
+        ctx.textAlign = 'center';
+        ctx.fillText(`Left Margin: ${targetMargin}px`, targetMargin, 80);
+        ctx.fillText(`Right Margin: ${targetMargin}px`, rightMarginX, 80);
+        
+        // Draw screen width info
+        ctx.fillStyle = '#FFFF00';
+        ctx.textAlign = 'center';
+        ctx.fillText(`Screen: ${this.screenWidth}x${this.screenHeight}`, this.screenWidth / 2, 50);
+        ctx.fillText(`Estimated Object Width: ${estimatedObjectWidth}px`, this.screenWidth / 2, 30);
+        
+        ctx.restore();
     }
 
     /**

@@ -401,6 +401,22 @@
         // Make test function available globally for debugging
         window.testCanvasClicks = testCanvasClicks;
         
+        // Debug function to visualize spawn positions
+        window.debugSpawnPositions = function() {
+            if (gameManager && gameManager.dataStreamGenerator) {
+                const canvas = document.getElementById('game-canvas');
+                if (canvas) {
+                    const ctx = canvas.getContext('2d');
+                    gameManager.dataStreamGenerator.debugDrawSpawnPositions(ctx);
+                    console.log('Spawn positions visualized on canvas');
+                } else {
+                    console.log('Canvas not found');
+                }
+            } else {
+                console.log('Game manager or data stream generator not available');
+            }
+        };
+        
         // Debug function to clear visual effects if screen gets stuck dark
         window.clearVisualEffects = function() {
             if (gameManager && gameManager.visualFeedbackSystem) {
