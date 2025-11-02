@@ -1,4 +1,8 @@
-# Project Structure
+---
+inclusion: always
+---
+
+# Project Structure & Architecture Guidelines
 
 ## Directory Organization
 
@@ -45,27 +49,45 @@
 
 ### Manager Pattern
 - Each major system has a dedicated manager class
-- GameManager acts as central coordinator
-- Clear separation of concerns between systems
+- GameManager acts as central coordinator and should be modified for game flow changes
+- Clear separation of concerns - don't mix manager responsibilities
+- Always use dependency injection between managers
 
 ### Configuration-Driven Design
-- Game balance stored in JSON files in `/data/`
-- Content separated from code logic
-- Easy tweaking without code changes
+- Game balance stored in JSON files in `/data/` - modify these for gameplay tweaks
+- Content separated from code logic - add new content via JSON, not hardcoded
+- Configuration changes don't require code restarts in development
 
 ### Module System
 - ES6 imports/exports for clean dependencies
-- No circular dependencies
-- Each file has single responsibility
+- **CRITICAL**: No circular dependencies allowed - will break module loading
+- Each file has single responsibility - don't add unrelated functionality
+- Import paths must be relative (e.g., `./GameManager.js`, `../core/constants.js`)
 
 ### Canvas-Based Rendering
-- Single canvas element for game area
-- HTML/CSS for UI overlays and menus
-- Responsive design with dynamic canvas sizing
+- Single canvas element for game area - don't create multiple canvases
+- HTML/CSS for UI overlays and menus - keep game logic separate from UI
+- Canvas context is shared - coordinate drawing operations through managers
 
-## Naming Conventions
+## Code Style Rules
+
+### File Organization
+- **Classes**: One class per file, filename matches class name
+- **Utilities**: Group related functions in single files
+- **Constants**: All game constants in `js/core/constants.js`
+- **Exports**: Use named exports, avoid default exports for consistency
+
+### Naming Conventions
 - **Classes**: PascalCase (e.g., `GameManager`, `ContentProvider`)
 - **Files**: PascalCase for classes, camelCase for utilities
 - **Constants**: UPPER_SNAKE_CASE in constants.js
 - **Methods**: camelCase with descriptive names
+- **Variables**: camelCase, avoid abbreviations
 - **CSS**: kebab-case with BEM-like structure for components
+
+### Development Guidelines
+- Always check for existing functionality before adding new features
+- Use object pooling for frequently created/destroyed objects (see InformationObjectPool)
+- Prefer composition over inheritance
+- Keep methods focused and under 50 lines when possible
+- Add JSDoc comments for public methods and complex logic
