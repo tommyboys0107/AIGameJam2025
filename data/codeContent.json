@@ -9,7 +9,17 @@
     "const users = [\n  { id: 1, name: 'Alice' },\n  { id: 2, name: 'Bob' }\n];",
     "if (user.hasPermission('read')) {\n  return file.content;\n}",
     "const encrypted = encrypt(data, key);\nstore(encrypted);",
-    "function logEvent(event) {\n  console.log(`[${new Date()}] ${event}`);\n}"
+    "function logEvent(event) {\n  console.log(`[${new Date()}] ${event}`);\n}",
+    "class DataProcessor {\n  process(data) {\n    return data.filter(item => item.valid);\n  }\n}",
+    "async function uploadFile(file) {\n  const formData = new FormData();\n  formData.append('file', file);\n  return await fetch('/upload', {\n    method: 'POST',\n    body: formData\n  });\n}",
+    "const hashPassword = (password) => {\n  return bcrypt.hash(password, 10);\n};",
+    "function debounce(func, delay) {\n  let timeoutId;\n  return (...args) => {\n    clearTimeout(timeoutId);\n    timeoutId = setTimeout(() => func(...args), delay);\n  };\n}",
+    "const apiClient = {\n  baseURL: 'https://api.example.com',\n  headers: {\n    'Content-Type': 'application/json',\n    'Authorization': 'Bearer token'\n  }\n};",
+    "function sanitizeInput(input) {\n  return input.replace(/[<>\"'&]/g, '');\n}",
+    "const cache = new Map();\nfunction memoize(fn) {\n  return (...args) => {\n    const key = JSON.stringify(args);\n    if (cache.has(key)) {\n      return cache.get(key);\n    }\n    const result = fn(...args);\n    cache.set(key, result);\n    return result;\n  };\n}",
+    "class EventEmitter {\n  constructor() {\n    this.events = {};\n  }\n  on(event, callback) {\n    if (!this.events[event]) {\n      this.events[event] = [];\n    }\n    this.events[event].push(callback);\n  }\n}",
+    "const validateEmail = (email) => {\n  const regex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\n  return regex.test(email);\n};",
+    "function throttle(func, limit) {\n  let inThrottle;\n  return function() {\n    const args = arguments;\n    const context = this;\n    if (!inThrottle) {\n      func.apply(context, args);\n      inThrottle = true;\n      setTimeout(() => inThrottle = false, limit);\n    }\n  };\n}"
   ],
   "corrupted": [
     "function authenticate(user) {\n  return user.isValid(\n}",
@@ -21,6 +31,16 @@
     "const users = [\n  { id: 1, name: 'Alice' },\n  { id: 2, name: 'Bob' }\n;",
     "if (user.hasPermission('read') {\n  return file.content;\n}",
     "const encrypted = encrypt(data, key)\nstore(encrypted);",
-    "function logEvent(event) {\n  console.log(`[${new Date()}] ${event}`)\n"
+    "function logEvent(event) {\n  console.log(`[${new Date()}] ${event}`)\n",
+    "class DataProcessor {\n  process(data) {\n    return data.filter(item => item.valid\n  }\n}",
+    "async function uploadFile(file) {\n  const formData = new FormData();\n  formData.append('file', file);\n  return await fetch('/upload' {\n    method: 'POST',\n    body: formData\n  });\n}",
+    "const hashPassword = (password) => {\n  return bcrypt.hash(password, 10\n};",
+    "function debounce(func, delay) {\n  let timeoutId;\n  return (...args) => {\n    clearTimeout(timeoutId);\n    timeoutId = setTimeout(() => func(...args), delay\n  };\n}",
+    "const apiClient = {\n  baseURL: 'https://api.example.com',\n  headers: {\n    'Content-Type': 'application/json'\n    'Authorization': 'Bearer token'\n  }\n};",
+    "function sanitizeInput(input) {\n  return input.replace(/[<>\"'&]/g, ''\n}",
+    "const cache = new Map();\nfunction memoize(fn) {\n  return (...args) => {\n    const key = JSON.stringify(args);\n    if (cache.has(key)) {\n      return cache.get(key);\n    }\n    const result = fn(...args)\n    cache.set(key, result);\n    return result;\n  };\n}",
+    "class EventEmitter {\n  constructor() {\n    this.events = {}\n  }\n  on(event, callback) {\n    if (!this.events[event]) {\n      this.events[event] = [];\n    }\n    this.events[event].push(callback\n  }\n}",
+    "const validateEmail = (email) => {\n  const regex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/\n  return regex.test(email);\n};",
+    "function throttle(func, limit) {\n  let inThrottle;\n  return function() {\n    const args = arguments;\n    const context = this;\n    if (!inThrottle) {\n      func.apply(context, args);\n      inThrottle = true;\n      setTimeout(() => inThrottle = false, limit\n    }\n  };\n}"
   ]
 }

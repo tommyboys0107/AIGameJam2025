@@ -1,0 +1,100 @@
+{
+  "gameSettings": {
+    "maxGameDuration": 120,
+    "phaseDuration": 15,
+    "difficultyIncreaseRate": 1.2,
+    "phases": ["Code", "Art", "Text"]
+  },
+  "spawnSettings": {
+    "baseSpawnIntervalMin": 0.5,
+    "baseSpawnIntervalMax": 1.0,
+    "maxConcurrentObjects": 15,
+    "movementSpeed": 2.0,
+    "spawnPositions": {
+      "top": { "x": "random", "y": -50 },
+      "left": { "x": -50, "y": "random" },
+      "right": { "x": "screenWidth + 50", "y": "random" }
+    }
+  },
+  "corruptionSettings": {
+    "maxCorruption": 100,
+    "corruptionThresholds": {
+      "warning": 60,
+      "critical": 80,
+      "gameOver": 100
+    },
+    "corruptionPenalties": {
+      "missedCorrupted": 15,
+      "falsePositive": 10,
+      "timeoutPenalty": 5
+    },
+    "corruptionProbability": {
+      "phase1": 0.3,
+      "phase2": 0.4,
+      "phase3": 0.5,
+      "maxProbability": 0.7
+    }
+  },
+  "difficultyScaling": {
+    "speedMultiplierPerPhase": 1.15,
+    "spawnRateMultiplierPerPhase": 1.1,
+    "corruptionProbabilityIncrease": 0.05,
+    "maxSpeedMultiplier": 3.0,
+    "maxSpawnRateMultiplier": 2.5
+  },
+  "uiSettings": {
+    "colors": {
+      "background": "#000000",
+      "neonGreen": "#00FF41",
+      "electronicBlue": "#00BFFF",
+      "warningRed": "#FF0040",
+      "corruptionRed": "#FF1744"
+    },
+    "animations": {
+      "flickerDuration": 0.2,
+      "glitchEffectDuration": 0.5,
+      "fadeTransitionDuration": 0.3
+    },
+    "hudElements": {
+      "corruptionMeterHeight": 20,
+      "timerFontSize": 24,
+      "messageDisplayDuration": 2.0
+    }
+  },
+  "performanceSettings": {
+    "targetFPS": 60,
+    "objectPoolSize": 30,
+    "maxParticleEffects": 10,
+    "canvasUpdateThrottle": 16
+  },
+  "contentSettings": {
+    "textDisplayDuration": 3.0,
+    "imageDisplayDuration": 2.5,
+    "codeDisplayDuration": 4.0,
+    "contentFadeInDuration": 0.5,
+    "contentSizes": {
+      "text": { "width": 200, "height": 60 },
+      "image": { "width": 80, "height": 80 },
+      "code": { "width": 250, "height": 100 }
+    }
+  },
+  "audioSettings": {
+    "masterVolume": 0.7,
+    "sfxVolume": 0.8,
+    "soundEffects": {
+      "click": "assets/audio/click.wav",
+      "block": "assets/audio/block.wav",
+      "phaseChange": "assets/audio/phase_change.wav",
+      "corruption": "assets/audio/corruption.wav",
+      "gameOver": "assets/audio/game_over.wav",
+      "success": "assets/audio/success.wav"
+    }
+  },
+  "debugSettings": {
+    "showFPS": false,
+    "showCollisionBoxes": false,
+    "showSpawnPoints": false,
+    "logPerformanceMetrics": false,
+    "enableConsoleLogging": true
+  }
+}

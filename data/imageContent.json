@@ -14,7 +14,22 @@
     "assets/images/green_light.png",
     "assets/images/progress_bar.png",
     "assets/images/connection_icon.png",
-    "assets/images/backup_icon.png"
+    "assets/images/backup_icon.png",
+    "assets/images/cpu_usage.png",
+    "assets/images/memory_graph.png",
+    "assets/images/network_traffic.png",
+    "assets/images/firewall_status.png",
+    "assets/images/encryption_key.png",
+    "assets/images/user_session.png",
+    "assets/images/api_endpoint.png",
+    "assets/images/load_balancer.png",
+    "assets/images/ssl_certificate.png",
+    "assets/images/audit_log.png",
+    "assets/images/system_health.png",
+    "assets/images/backup_schedule.png",
+    "assets/images/security_scan.png",
+    "assets/images/performance_metric.png",
+    "assets/images/data_flow.png"
   ],
   "corrupted": [
     "assets/images/glitched_network.png",
@@ -31,6 +46,21 @@
     "assets/images/red_light.png",
     "assets/images/broken_progress.png",
     "assets/images/disconnected_icon.png",
-    "assets/images/failed_backup.png"
+    "assets/images/failed_backup.png",
+    "assets/images/cpu_overload.png",
+    "assets/images/memory_leak.png",
+    "assets/images/network_chaos.png",
+    "assets/images/firewall_breach.png",
+    "assets/images/broken_encryption.png",
+    "assets/images/ghost_session.png",
+    "assets/images/dead_endpoint.png",
+    "assets/images/crashed_balancer.png",
+    "assets/images/expired_certificate.png",
+    "assets/images/corrupted_log.png",
+    "assets/images/system_failure.png",
+    "assets/images/backup_corruption.png",
+    "assets/images/security_breach.png",
+    "assets/images/performance_crash.png",
+    "assets/images/data_corruption.png"
   ]
 }

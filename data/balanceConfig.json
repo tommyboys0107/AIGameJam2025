@@ -1,0 +1,87 @@
+{
+  "scoring": {
+    "correctBlock": 10,
+    "correctAllow": 5,
+    "streakBonus": 2,
+    "maxStreakMultiplier": 3,
+    "phaseCompletionBonus": 50
+  },
+  "penalties": {
+    "missedCorrupted": {
+      "corruptionIncrease": 15,
+      "scoreDeduction": 20
+    },
+    "falsePositive": {
+      "corruptionIncrease": 10,
+      "scoreDeduction": 15
+    },
+    "timeout": {
+      "corruptionIncrease": 5,
+      "scoreDeduction": 5
+    }
+  },
+  "difficultyProgression": {
+    "easyMode": {
+      "corruptionProbability": 0.2,
+      "spawnRateMultiplier": 0.8,
+      "movementSpeedMultiplier": 0.9,
+      "corruptionThreshold": 120
+    },
+    "normalMode": {
+      "corruptionProbability": 0.3,
+      "spawnRateMultiplier": 1.0,
+      "movementSpeedMultiplier": 1.0,
+      "corruptionThreshold": 100
+    },
+    "hardMode": {
+      "corruptionProbability": 0.4,
+      "spawnRateMultiplier": 1.2,
+      "movementSpeedMultiplier": 1.1,
+      "corruptionThreshold": 80
+    },
+    "expertMode": {
+      "corruptionProbability": 0.5,
+      "spawnRateMultiplier": 1.4,
+      "movementSpeedMultiplier": 1.2,
+      "corruptionThreshold": 60
+    }
+  },
+  "adaptiveDifficulty": {
+    "enabled": true,
+    "adjustmentInterval": 30,
+    "performanceThresholds": {
+      "excellent": 0.9,
+      "good": 0.75,
+      "average": 0.6,
+      "poor": 0.4
+    },
+    "adjustments": {
+      "excellent": {
+        "spawnRateIncrease": 0.1,
+        "speedIncrease": 0.05
+      },
+      "poor": {
+        "spawnRateDecrease": 0.1,
+        "speedDecrease": 0.05
+      }
+    }
+  },
+  "endGameConditions": {
+    "timeBasedSuccess": {
+      "duration": 120,
+      "message": "Human Firewall replaced by AI",
+      "effect": "learningPattern"
+    },
+    "corruptionFailure": {
+      "threshold": 100,
+      "message": "Reality Corrupted",
+      "effect": "dataFlood"
+    },
+    "perfectRun": {
+      "corruptionThreshold": 10,
+      "accuracyThreshold": 0.95,
+      "message": "Perfect Human Firewall",
+      "effect": "goldenEnding"
+    }
+  }
+}
