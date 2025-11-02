@@ -15,8 +15,8 @@ export class InformationObject {
         // Position and dimensions
         this.x = x;
         this.y = y;
-        this.width = 120;  // Default width for collision detection
-        this.height = 60;  // Default height for collision detection
+        this.width = 280;  // Much larger width for full-screen visibility
+        this.height = 140; // Much larger height for full-screen visibility
         
         // Movement properties
         this.movementSpeed = movementSpeed;
@@ -31,7 +31,7 @@ export class InformationObject {
         this.displayColor = data.displayColor;
         
         // Visual properties
-        this.fontSize = 14;
+        this.fontSize = 24;  // Much larger font size for full-screen readability
         this.fontFamily = 'Courier New, monospace';
         this.borderColor = this.isCorrupted ? '#FF4444' : '#00FF41';
         this.backgroundColor = 'rgba(0, 0, 0, 0.8)';
@@ -61,11 +61,11 @@ export class InformationObject {
             // Adjust dimensions based on image aspect ratio
             const aspectRatio = this.imageElement.width / this.imageElement.height;
             if (aspectRatio > 1) {
-                this.width = 120;
-                this.height = 120 / aspectRatio;
+                this.width = 280;  // Much larger for full-screen images
+                this.height = 280 / aspectRatio;
             } else {
-                this.height = 60;
-                this.width = 60 * aspectRatio;
+                this.height = 140; // Much larger for full-screen images
+                this.width = 140 * aspectRatio;
             }
         };
         this.imageElement.onerror = () => {
@@ -114,7 +114,7 @@ export class InformationObject {
 
         // Draw border
         ctx.strokeStyle = this.borderColor;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 3;  // Thicker border for larger objects
         ctx.strokeRect(this.x, this.y, this.width, this.height);
 
         // Render content based on type
@@ -166,7 +166,7 @@ export class InformationObject {
         }
 
         // Render lines
-        const lineHeight = this.fontSize + 2;
+        const lineHeight = this.fontSize + 4; // Increased line height for better readability
         const startY = this.y + this.height / 2 - (lines.length - 1) * lineHeight / 2;
 
         lines.forEach((line, index) => {
@@ -219,14 +219,14 @@ export class InformationObject {
      */
     renderCode(ctx) {
         ctx.fillStyle = this.displayColor;
-        ctx.font = `${this.fontSize - 2}px ${this.fontFamily}`; // Slightly smaller for code
+        ctx.font = `${this.fontSize - 4}px ${this.fontFamily}`; // Slightly smaller for code but still readable
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
 
         // Simple syntax highlighting for code
         const lines = this.contentText.split('\n');
-        const lineHeight = this.fontSize;
-        const padding = 5;
+        const lineHeight = this.fontSize + 2; // Increased line height for better readability
+        const padding = 10; // Increased padding for larger objects
 
         lines.forEach((line, index) => {
             const y = this.y + padding + index * lineHeight;

@@ -231,42 +231,15 @@
                 return;
             }
 
-            // Get container dimensions for responsive sizing
-            const gameScreen = document.getElementById('game-screen');
-            const hudSide = document.getElementById('hud-side');
-            const hudTop = document.getElementById('hud-top');
+            // Full screen canvas setup - use entire viewport
+            const containerWidth = window.innerWidth;
+            const containerHeight = window.innerHeight;
             
-            // Calculate available space for canvas
-            const containerWidth = gameScreen ? gameScreen.clientWidth : window.innerWidth;
-            const containerHeight = gameScreen ? gameScreen.clientHeight : window.innerHeight;
+            // Set canvas to full screen dimensions
+            const canvasWidth = containerWidth;
+            const canvasHeight = containerHeight;
             
-            // Account for HUD elements
-            const hudSideWidth = hudSide ? hudSide.offsetWidth : 250;
-            const hudTopHeight = hudTop ? hudTop.offsetHeight : 60;
-            
-            // Calculate canvas dimensions
-            const availableWidth = containerWidth - hudSideWidth - 40; // 40px for margins
-            const availableHeight = containerHeight - hudTopHeight - 40;
-            
-            // Set minimum and maximum canvas sizes
-            const minWidth = 600;
-            const minHeight = 400;
-            const maxWidth = 1200;
-            const maxHeight = 800;
-            
-            // Calculate optimal canvas size maintaining aspect ratio
-            const targetAspectRatio = 4/3; // 4:3 aspect ratio
-            let canvasWidth = Math.max(minWidth, Math.min(maxWidth, availableWidth));
-            let canvasHeight = Math.max(minHeight, Math.min(maxHeight, availableHeight));
-            
-            // Adjust to maintain aspect ratio
-            if (canvasWidth / canvasHeight > targetAspectRatio) {
-                canvasWidth = canvasHeight * targetAspectRatio;
-            } else {
-                canvasHeight = canvasWidth / targetAspectRatio;
-            }
-            
-            // Set canvas dimensions
+            // Set canvas dimensions to full screen
             canvas.width = Math.floor(canvasWidth);
             canvas.height = Math.floor(canvasHeight);
             

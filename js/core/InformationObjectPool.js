@@ -120,8 +120,8 @@ export class InformationObjectPool {
         }
 
         // Reset dimensions to default (may be adjusted by image loading)
-        obj.width = 120;
-        obj.height = 60;
+        obj.width = 280;  // Much larger default size for full-screen
+        obj.height = 140; // Much larger default size for full-screen
     }
 
     /**

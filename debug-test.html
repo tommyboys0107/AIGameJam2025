@@ -118,11 +118,11 @@
             log('Initializing debug test...');
             
             try {
-                // Create canvas element
+                // Create canvas element for full screen testing
                 const canvas = document.createElement('canvas');
                 canvas.id = 'game-canvas';
-                canvas.width = 800;
-                canvas.height = 600;
+                canvas.width = window.innerWidth;   // Full screen width
+                canvas.height = window.innerHeight; // Full screen height
                 canvas.style.display = 'none';
                 document.body.appendChild(canvas);
                 
@@ -135,7 +135,7 @@
                 
                 const spawnSettings = new SpawnSettings(500, 1000, 15, 2.0);
                 dataStreamGenerator = new DataStreamGenerator(contentProvider, phaseManager, spawnSettings);
-                dataStreamGenerator.setScreenDimensions(800, 600);
+                dataStreamGenerator.setScreenDimensions(window.innerWidth, window.innerHeight);  // Full screen dimensions
                 
                 const corruptionSystem = new CorruptionSystem(100);
                 uiManager = new UIManager();

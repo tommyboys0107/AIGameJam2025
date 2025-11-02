@@ -38,24 +38,26 @@ body {
     display: none;
 }
 
-/* Game canvas */
+/* Game canvas - Full screen */
 #game-canvas {
-    border: 2px solid #00FF41;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw !important;
+    height: 100vh !important;
     background-color: #000000;
-    box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
-    position: relative;
-    z-index: 5;
+    z-index: 1;
     display: block;
-    margin: 0 auto;
 }
 
-/* Game screen layout */
+/* Game screen layout - Full screen */
 #game-screen {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
-    position: relative;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    padding: 0;
     overflow: hidden;
 }
 
@@ -63,10 +65,10 @@ body {
     display: none;
 }
 
-/* Canvas container for proper positioning */
+/* Canvas container - Full screen */
 #game-screen canvas {
-    max-width: calc(100vw - 290px); /* Account for HUD side panel */
-    max-height: calc(100vh - 100px); /* Account for HUD top panel */
+    width: 100vw !important;
+    height: 100vh !important;
 }
 
 /* Instructions Overlay */
@@ -223,13 +225,13 @@ h1 {
 
 /* HUD Interface Styles */
 #hud {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     pointer-events: none;
-    z-index: 10;
+    z-index: 50;
 }
 
 /* Grid overlay for retro aesthetic */
@@ -331,22 +333,24 @@ h1 {
     }
 }
 
-/* Top HUD bar */
+/* Top HUD bar - Overlay style */
 #hud-top {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 60px;
-    background: linear-gradient(180deg, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.7) 100%);
-    border-bottom: 2px solid #00FF41;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.6) 100%);
+    border-bottom: 1px solid rgba(0, 255, 65, 0.6);
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0 20px;
     font-family: 'Courier New', monospace;
     font-size: 14px;
-    z-index: 20;
+    z-index: 100;
+    backdrop-filter: blur(5px);
+    pointer-events: auto;
 }
 
 #system-status, #phase-info {
@@ -383,17 +387,19 @@ h1 {
     text-shadow: 0 0 5px #00BFFF;
 }
 
-/* Side HUD panel */
+/* Side HUD panel - Overlay style */
 #hud-side {
-    position: absolute;
+    position: fixed;
     top: 60px;
     right: 0;
-    width: 250px;
-    height: calc(100% - 60px);
-    background: linear-gradient(270deg, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.7) 100%);
-    border-left: 2px solid #00FF41;
+    width: 280px;
+    height: calc(100vh - 60px);
+    background: linear-gradient(270deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.6) 100%);
+    border-left: 1px solid rgba(0, 255, 65, 0.6);
     padding: 20px;
-    z-index: 20;
+    z-index: 100;
+    backdrop-filter: blur(5px);
+    pointer-events: auto;
 }
 
 /* Corruption meter */
@@ -1345,7 +1351,7 @@ h1 {
     }
     
     #hud-side {
-        width: 180px;
+        width: 200px;
         top: 50px;
         padding: 15px;
     }
@@ -1362,14 +1368,10 @@ h1 {
         font-size: 10px;
     }
     
-    /* Adjust canvas for smaller screens */
+    /* Canvas remains full screen */
     #game-screen canvas {
-        max-width: calc(100vw - 200px);
-        max-height: calc(100vh - 80px);
-    }
-    
-    #game-screen {
-        padding: 10px;
+        width: 100vw !important;
+        height: 100vh !important;
     }
 }
 
@@ -1384,7 +1386,7 @@ h1 {
     }
     
     #hud-side {
-        width: 160px;
+        width: 180px;
         top: 45px;
         padding: 10px;
     }
@@ -1398,15 +1400,10 @@ h1 {
         height: 6px;
     }
     
-    /* Mobile canvas adjustments */
+    /* Canvas remains full screen on mobile */
     #game-screen canvas {
-        max-width: calc(100vw - 180px);
-        max-height: calc(100vh - 70px);
-        border-width: 1px;
-    }
-    
-    #game-screen {
-        padding: 5px;
+        width: 100vw !important;
+        height: 100vh !important;
     }
     
     /* Reduce grid overlay on mobile for performance */
@@ -1424,19 +1421,16 @@ h1 {
     }
     
     #hud-side {
-        width: 140px;
+        width: 160px;
         top: 40px;
         padding: 8px;
         font-size: 10px;
     }
     
+    /* Canvas remains full screen in landscape */
     #game-screen canvas {
-        max-width: calc(100vw - 160px);
-        max-height: calc(100vh - 60px);
-    }
-    
-    #game-screen {
-        padding: 5px;
+        width: 100vw !important;
+        height: 100vh !important;
     }
     
     .status-line {

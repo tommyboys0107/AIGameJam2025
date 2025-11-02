@@ -27,8 +27,8 @@ export const GAME_CONSTANTS = {
     DEFAULT_PHASE_DURATION: 15000, // 15 seconds in milliseconds
     BASE_SPAWN_INTERVAL_MIN: 500,  // 0.5 seconds in milliseconds
     BASE_SPAWN_INTERVAL_MAX: 1000, // 1.0 seconds in milliseconds
-    MAX_CONCURRENT_OBJECTS: 15,
-    BASE_MOVEMENT_SPEED: 2.0,
+    MAX_CONCURRENT_OBJECTS: 12,  // Reduced for larger objects
+    BASE_MOVEMENT_SPEED: 1.8,  // Slightly slower for larger objects
     DIFFICULTY_INCREASE_RATE: 1.2,
     MAX_CORRUPTION: 100
 };

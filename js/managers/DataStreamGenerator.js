@@ -29,8 +29,8 @@ export class DataStreamGenerator {
         this.currentMovementSpeed = this.settings.movementSpeed;
         
         // Screen dimensions for spawn positioning
-        this.screenWidth = 800;  // Default, should be updated by game manager
-        this.screenHeight = 600; // Default, should be updated by game manager
+        this.screenWidth = 1200;  // Updated default for larger canvas
+        this.screenHeight = 900; // Updated default for larger canvas
         
         // Spawn position management
         this.spawnPositions = this.calculateSpawnPositions();
@@ -73,8 +73,8 @@ export class DataStreamGenerator {
      */
     calculateSpawnPositions() {
         const positions = [];
-        const objectWidth = 120; // Default object width
-        const objectHeight = 60; // Default object height
+        const objectWidth = 280; // Much larger object width for full-screen
+        const objectHeight = 140; // Much larger object height for full-screen
         const margin = 20; // Margin from screen edge
         
         // Top edge positions
