@@ -129,6 +129,9 @@ export class VisualFeedbackSystem {
             case 'screenFlash':
                 this.renderScreenFlash(ctx, effect, progress);
                 break;
+            case 'warningPulse':
+                this.renderWarningPulse(ctx, effect, progress);
+                break;
         }
 
         ctx.restore();
@@ -263,6 +266,51 @@ export class VisualFeedbackSystem {
             ctx.fillStyle = effect.color;
             ctx.globalAlpha = alpha;
             ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            ctx.restore();
+        }
+    }
+
+    /**
+     * Renders warning pulse effect for escaped objects
+     * @param {CanvasRenderingContext2D} ctx - Canvas rendering context
+     * @param {Object} effect - Effect object
+     * @param {number} progress - Animation progress (0-1)
+     * @private
+     */
+    renderWarningPulse(ctx, effect) {
+        const progress = effect.age / effect.duration;
+        const pulseProgress = (effect.age / (effect.duration / effect.pulseCount)) % 1;
+        const pulseAlpha = Math.sin(pulseProgress * Math.PI);
+        const alpha = (1 - progress) * pulseAlpha * 0.8;
+
+        if (alpha > 0.01) {
+            ctx.save();
+            ctx.strokeStyle = effect.color;
+            ctx.fillStyle = effect.color;
+            ctx.globalAlpha = alpha;
+            ctx.lineWidth = 4;
+
+            // Draw pulsing warning circle
+            const radius = 30 + (pulseProgress * 20);
+            ctx.beginPath();
+            ctx.arc(effect.x, effect.y, radius, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Draw warning triangle in center
+            const triangleSize = 15;
+            ctx.beginPath();
+            ctx.moveTo(effect.x, effect.y - triangleSize);
+            ctx.lineTo(effect.x - triangleSize, effect.y + triangleSize);
+            ctx.lineTo(effect.x + triangleSize, effect.y + triangleSize);
+            ctx.closePath();
+            ctx.fill();
+
+            // Draw exclamation mark
+            ctx.fillStyle = '#000000';
+            ctx.globalAlpha = alpha;
+            ctx.fillRect(effect.x - 2, effect.y - 8, 4, 10);
+            ctx.fillRect(effect.x - 2, effect.y + 5, 4, 4);
+
             ctx.restore();
         }
     }
@@ -435,6 +483,31 @@ export class VisualFeedbackSystem {
     showFailureFeedback(x, y) {
         this.addClickRippleEffect(x, y, this.effectConfig.clickRipple.failColor);
         this.showScreenFlash(this.effectConfig.clickRipple.failColor, 0.2);
+    }
+
+    /**
+     * Shows visual feedback for corrupted objects reaching the bottom
+     * @param {number} x - X coordinate
+     * @param {number} y - Y coordinate
+     */
+    showBottomEscapeFeedback(x, y) {
+        // Create a more dramatic effect for objects escaping
+        this.addClickRippleEffect(x, y, '#FF0000'); // Bright red for escaped corruption
+        this.addParticleEffect(x, y, '#FF0000');
+        
+        // Add a warning pulse effect
+        const effect = {
+            type: 'warningPulse',
+            x: x,
+            y: y,
+            color: '#FF0000',
+            age: 0,
+            duration: 800,
+            pulseCount: 3
+        };
+        
+        this.activeEffects.push(effect);
+        console.log(`Bottom escape feedback shown at (${x.toFixed(1)}, ${y.toFixed(1)})`);
     }
 
     /**

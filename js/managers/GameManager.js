@@ -332,9 +332,50 @@ export class GameManager {
             if (this.dataStreamGenerator && typeof this.dataStreamGenerator === 'object') {
                 this.dataStreamGenerator.onObjectProcessed = (wasBlocked, wasCorrupted) => {
                     try {
+                        // Process the decision through corruption system
                         if (this.corruptionSystem && typeof this.corruptionSystem.processDecision === 'function') {
                             this.corruptionSystem.processDecision(wasBlocked, wasCorrupted);
                         }
+                        
+                        // Add visual feedback when objects reach the bottom
+                        if (!wasBlocked) {
+                            // Object reached the bottom (wasn't blocked by player)
+                            if (wasCorrupted) {
+                                // Corrupted object reached bottom - this is bad!
+                                console.log('Corrupted object reached bottom - showing negative feedback');
+                                
+                                // Show screen flash for missed corrupted content
+                                if (this.screenEffectsManager) {
+                                    this.screenEffectsManager.showScreenFlash('failure', 0.4, 400);
+                                }
+                                
+                                // Play failure audio
+                                if (this.audioManager) {
+                                    this.audioManager.playClickFail();
+                                }
+                                
+                                // Show UI feedback message
+                                if (this.uiManager && typeof this.uiManager.showFeedbackMessage === 'function') {
+                                    this.uiManager.showFeedbackMessage('CORRUPTED DATA ESCAPED!', 'error', 2000);
+                                }
+                                
+                                // Show visual feedback at bottom of screen
+                                if (this.visualFeedbackSystem) {
+                                    const canvas = document.getElementById('game-canvas');
+                                    if (canvas) {
+                                        // Show escape feedback at bottom center of screen
+                                        const x = canvas.width / 2;
+                                        const y = canvas.height - 50;
+                                        this.visualFeedbackSystem.showBottomEscapeFeedback(x, y);
+                                    }
+                                }
+                            } else {
+                                // Legitimate object reached bottom - this is correct behavior
+                                // No negative feedback needed, but could add subtle positive indicator
+                                console.log('Legitimate object passed through correctly');
+                            }
+                        }
+                        
                     } catch (error) {
                         console.error('Error processing object decision:', error);
                         // Continue game despite scoring error
