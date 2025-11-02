@@ -367,8 +367,8 @@ export class DataStreamGenerator {
         const scaledMax = baseMax / this.difficultyMultiplier;
         
         // Ensure minimum interval doesn't go below reasonable limits
-        const minInterval = Math.max(scaledMin, 200); // Minimum 200ms
-        const maxInterval = Math.max(scaledMax, minInterval + 100);
+        const minInterval = Math.max(scaledMin, 100); // Minimum 100ms (faster spawning)
+        const maxInterval = Math.max(scaledMax, minInterval + 50);
         
         return Math.random() * (maxInterval - minInterval) + minInterval;
     }

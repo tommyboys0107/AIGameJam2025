@@ -6,10 +6,10 @@
     "phases": ["Code", "Art", "Text"]
   },
   "spawnSettings": {
-    "baseSpawnIntervalMin": 0.5,
-    "baseSpawnIntervalMax": 1.0,
-    "maxConcurrentObjects": 15,
-    "movementSpeed": 2.0,
+    "baseSpawnIntervalMin": 0.3,
+    "baseSpawnIntervalMax": 0.7,
+    "maxConcurrentObjects": 20,
+    "movementSpeed": 3.0,
     "spawnPositions": {
       "top": { "x": "random", "y": -50 },
       "left": { "x": -50, "y": "random" },
@@ -36,11 +36,11 @@
     }
   },
   "difficultyScaling": {
-    "speedMultiplierPerPhase": 1.15,
-    "spawnRateMultiplierPerPhase": 1.1,
+    "speedMultiplierPerPhase": 1.2,
+    "spawnRateMultiplierPerPhase": 1.15,
     "corruptionProbabilityIncrease": 0.05,
-    "maxSpeedMultiplier": 3.0,
-    "maxSpawnRateMultiplier": 2.5
+    "maxSpeedMultiplier": 3.5,
+    "maxSpawnRateMultiplier": 3.0
   },
   "uiSettings": {
     "colors": {
