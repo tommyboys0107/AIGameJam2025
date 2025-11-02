@@ -23,6 +23,12 @@ export class DataStreamGenerator {
         this.baseCorruptionProbability = 0.3; // 30% base chance
         this.maxCorruptionProbability = 0.7;  // 70% max chance at high difficulty
         
+        // Dynamic object count scaling
+        this.baseMaxObjects = 8;  // Starting number of objects
+        this.maxMaxObjects = 13;  // Maximum number of objects
+        this.currentMaxObjects = this.baseMaxObjects;
+        this.gameStartTime = null; // Will be set when game starts
+        
         // Screen dimensions for spawn positioning
         this.screenWidth = 1200;  // Updated default for larger canvas
         this.screenHeight = 900; // Updated default for larger canvas
@@ -31,10 +37,10 @@ export class DataStreamGenerator {
         this.isActive = false;
         this.isPaused = false;
         
-        // Object pool for efficient memory management - force to 8 objects
-        const maxObjects = 8;
-        this.objectPool = new InformationObjectPool(maxObjects);
-        console.log(`🔧 Forced pool size to ${maxObjects}, settings had: ${this.settings.maxConcurrentObjects}`);
+        // Object pool for efficient memory management - start with max possible size
+        const initialPoolSize = this.maxMaxObjects; // Use maximum possible size
+        this.objectPool = new InformationObjectPool(initialPoolSize);
+        console.log(`🔧 Pool initialized with size ${initialPoolSize} (will scale from ${this.baseMaxObjects} to ${this.maxMaxObjects})`);
         
         // Spawn timing management (after all properties are initialized)
         this.lastSpawnTime = 0;
@@ -73,29 +79,79 @@ export class DataStreamGenerator {
      */
     calculateSpawnPositions() {
         const positions = [];
-        const margin = 50; // Margin from screen edges
+        const targetMargin = 30; // Target margin for both sides
         const maxObjectWidth = 600; // Maximum possible object width
+        const numTopPositions = 6;
         
-        // Only top edge positions - spread across entire screen width
-        const numTopPositions = 5; // Reduce to 5 positions for better spacing
-        const availableWidth = this.screenWidth - (2 * margin) - maxObjectWidth; // Account for object width
-        const topSpacing = Math.max(250, availableWidth / Math.max(1, numTopPositions - 1)); // Minimum 250px spacing
+        // Calculate positions to ensure exactly equal margins
+        // We want: leftMargin = rightMargin = targetMargin
+        // This means: firstObjectX = targetMargin
+        // And: lastObjectX + maxObjectWidth + targetMargin = screenWidth
+        // So: lastObjectX = screenWidth - targetMargin - maxObjectWidth
         
-        for (let i = 0; i < numTopPositions; i++) {
-            const x = margin + (i * topSpacing);
-            // Ensure the rightmost edge of the object doesn't exceed screen bounds
-            const clampedX = Math.min(x, this.screenWidth - margin - maxObjectWidth);
-            
+        const firstObjectX = targetMargin;
+        const lastObjectX = this.screenWidth - targetMargin - maxObjectWidth;
+        const totalSpread = lastObjectX - firstObjectX;
+        
+        if (totalSpread < 0) {
+            console.warn('Screen too narrow for current object size and margins');
+            // Fallback: single position in center
             positions.push({
-                x: clampedX,
-                y: -150, // Start well above screen
+                x: this.screenWidth / 2 - maxObjectWidth / 2,
+                y: -150,
                 edge: 'top'
             });
+        } else {
+            // Distribute positions evenly between first and last
+            for (let i = 0; i < numTopPositions; i++) {
+                let x;
+                if (numTopPositions === 1) {
+                    x = firstObjectX;
+                } else {
+                    // Linear interpolation between first and last position
+                    const ratio = i / (numTopPositions - 1);
+                    x = firstObjectX + (ratio * totalSpread);
+                }
+                
+                positions.push({
+                    x: x,
+                    y: -150, // Start well above screen
+                    edge: 'top'
+                });
+            }
         }
         
         console.log(`Generated ${positions.length} spawn positions (screen: ${this.screenWidth}x${this.screenHeight})`);
-        console.log(`Available width: ${availableWidth}px, spacing: ${topSpacing.toFixed(1)}px`);
-        console.log(`Positions: ${positions.map(p => p.x.toFixed(0)).join(', ')}`);
+        console.log(`Target margin: ${targetMargin}px (both sides)`);
+        console.log(`Object positions: ${positions.map(p => p.x.toFixed(1)).join(', ')}`);
+        
+        if (positions.length > 0) {
+            // Verify margins are exactly equal by design
+            const leftmostX = positions[0].x;
+            const rightmostX = positions[positions.length - 1].x;
+            const actualLeftMargin = leftmostX;
+            const actualRightMargin = this.screenWidth - (rightmostX + maxObjectWidth);
+            
+            console.log(`📏 Margin verification:`);
+            console.log(`  Left margin: ${actualLeftMargin.toFixed(3)}px`);
+            console.log(`  Right margin: ${actualRightMargin.toFixed(3)}px`);
+            console.log(`  Difference: ${Math.abs(actualLeftMargin - actualRightMargin).toFixed(6)}px`);
+            console.log(`  Target was: ${targetMargin}px`);
+            
+            if (positions.length > 1) {
+                // Calculate spacing between positions
+                const spacings = [];
+                for (let i = 1; i < positions.length; i++) {
+                    spacings.push((positions[i].x - positions[i-1].x).toFixed(1));
+                }
+                console.log(`  Spacings: ${spacings.join(', ')}px`);
+                
+                // Show total spread
+                console.log(`  Total spread: ${totalSpread.toFixed(1)}px`);
+                console.log(`  First object at: ${firstObjectX}px`);
+                console.log(`  Last object at: ${lastObjectX}px`);
+            }
+        }
         
         return positions;
     }
@@ -107,22 +163,23 @@ export class DataStreamGenerator {
         console.log('🚀 DataStreamGenerator started');
         this.isActive = true;
         this.isPaused = false;
-        this.lastSpawnTime = Date.now();
+        this.gameStartTime = Date.now(); // Record game start time
+        this.lastSpawnTime = this.gameStartTime;
         this.nextSpawnInterval = this.getRandomSpawnInterval();
         this.objectsSpawnedThisPhase = 0;
+        this.currentMaxObjects = this.baseMaxObjects; // Reset to base
         
         console.log(`📋 Generator settings:`, {
             isActive: this.isActive,
             isPaused: this.isPaused,
-            maxConcurrentObjects: this.settings.maxConcurrentObjects,
+            baseMaxObjects: this.baseMaxObjects,
+            maxMaxObjects: this.maxMaxObjects,
+            currentMaxObjects: this.currentMaxObjects,
             baseSpawnIntervalMin: this.settings.baseSpawnIntervalMin,
             baseSpawnIntervalMax: this.settings.baseSpawnIntervalMax,
             nextSpawnInterval: this.nextSpawnInterval,
             spawnPositions: this.spawnPositions.length
         });
-        
-        console.log(`🔧 Settings object:`, this.settings);
-        console.log(`🔧 GAME_CONSTANTS.MAX_CONCURRENT_OBJECTS:`, GAME_CONSTANTS.MAX_CONCURRENT_OBJECTS);
     }
 
     /**
@@ -255,7 +312,7 @@ export class DataStreamGenerator {
         
         // Check if we've reached the maximum concurrent objects
         const currentActiveCount = this.objectPool.getActiveObjectCount();
-        const maxAllowed = 8; // Force to 8 objects
+        const maxAllowed = this.calculateCurrentMaxObjects(); // Dynamic max objects
         
         console.log(`📊 Current active objects: ${currentActiveCount}/${maxAllowed}`);
         
@@ -622,6 +679,10 @@ export class DataStreamGenerator {
             objectsSpawnedThisPhase: this.objectsSpawnedThisPhase,
             activeObjects: poolStats.activeObjects,
             poolUtilization: poolStats.poolUtilization,
+            currentMaxObjects: this.currentMaxObjects,
+            baseMaxObjects: this.baseMaxObjects,
+            maxMaxObjects: this.maxMaxObjects,
+            gameElapsedTime: this.gameStartTime ? (Date.now() - this.gameStartTime) / 1000 : 0,
             nextSpawnInterval: this.nextSpawnInterval,
             spawnPositionsAvailable: this.spawnPositions.length,
             contentProviderLoaded: this.contentProvider ? this.contentProvider.isContentLoaded() : false
@@ -708,6 +769,40 @@ export class DataStreamGenerator {
         if (beforeCount !== afterCount) {
             console.log(`Forced cleanup: removed ${beforeCount - afterCount} inactive objects`);
         }
+    }
+
+    /**
+     * Calculates the current maximum objects based on elapsed time
+     * @returns {number} Current maximum objects allowed
+     * @private
+     */
+    calculateCurrentMaxObjects() {
+        if (!this.gameStartTime) {
+            return this.baseMaxObjects;
+        }
+        
+        const elapsedTime = Date.now() - this.gameStartTime;
+        const elapsedSeconds = elapsedTime / 1000;
+        
+        // Increase max objects every 15 seconds
+        const increaseInterval = 15; // seconds
+        const increaseAmount = 1; // objects per interval
+        
+        const additionalObjects = Math.floor(elapsedSeconds / increaseInterval) * increaseAmount;
+        const newMaxObjects = Math.min(this.baseMaxObjects + additionalObjects, this.maxMaxObjects);
+        
+        // Update object pool size if needed
+        if (newMaxObjects !== this.currentMaxObjects) {
+            console.log(`📈 Increasing max objects: ${this.currentMaxObjects} -> ${newMaxObjects} (${elapsedSeconds.toFixed(0)}s elapsed)`);
+            this.currentMaxObjects = newMaxObjects;
+            
+            // Resize object pool to accommodate more objects
+            if (newMaxObjects > this.objectPool.poolSize) {
+                this.objectPool.resizePool(newMaxObjects);
+            }
+        }
+        
+        return this.currentMaxObjects;
     }
 
     /**
