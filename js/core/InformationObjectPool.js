@@ -172,12 +172,9 @@ export class InformationObjectPool {
             if (obj.isObjectActive()) {
                 obj.update(deltaTime);
                 
-                // Check if object has reached bottom of screen
-                if (obj.hasReachedBottom(screenHeight)) {
-                    console.log(`🗑️ Removing object that reached bottom: y=${obj.y.toFixed(0)}, screenHeight=${screenHeight}`);
-                    this.returnObject(obj);
-                    removedCount++;
-                }
+                // Don't automatically remove objects that reach bottom here
+                // Let DataStreamGenerator handle the scoring logic first
+                // Objects will be marked as inactive by DataStreamGenerator.checkObjectsReachedBottom()
             } else {
                 // Object is inactive, return it to pool
                 console.log(`🗑️ Removing inactive object`);
