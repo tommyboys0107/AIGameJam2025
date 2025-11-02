@@ -333,24 +333,47 @@ h1 {
     }
 }
 
-/* Top HUD bar - Overlay style */
+/* Compact Top HUD bar - Single line layout */
 #hud-top {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
-    height: 60px;
-    background: linear-gradient(180deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.6) 100%);
-    border-bottom: 1px solid rgba(0, 255, 65, 0.6);
+    height: 50px;  /* Reduced height for compact single-line layout */
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.7) 100%);
+    border-bottom: 2px solid rgba(0, 255, 65, 0.8);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 20px;
+    padding: 8px 20px;
     font-family: 'Courier New', monospace;
-    font-size: 14px;
+    font-size: 13px;
     z-index: 100;
-    backdrop-filter: blur(5px);
+    backdrop-filter: blur(8px);
     pointer-events: auto;
+}
+
+/* HUD sections layout - Single line horizontal */
+#hud-left-section, #hud-center-section, #hud-right-section {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 15px;
+}
+
+#hud-left-section {
+    flex: 1;
+    justify-content: flex-start;
+}
+
+#hud-center-section {
+    flex: 1.5;
+    justify-content: center;
+}
+
+#hud-right-section {
+    flex: 1;
+    justify-content: flex-end;
 }
 
 #system-status, #phase-info {
@@ -387,49 +410,41 @@ h1 {
     text-shadow: 0 0 5px #00BFFF;
 }
 
-/* Side HUD panel - Overlay style */
-#hud-side {
-    position: fixed;
-    top: 60px;
-    right: 0;
-    width: 280px;
-    height: calc(100vh - 60px);
-    background: linear-gradient(270deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.6) 100%);
-    border-left: 1px solid rgba(0, 255, 65, 0.6);
-    padding: 20px;
-    z-index: 100;
-    backdrop-filter: blur(5px);
-    pointer-events: auto;
-}
+/* Side HUD panel removed - all content moved to top */
 
-/* Corruption meter */
+/* Corruption meter - Compact horizontal layout */
 #corruption-panel {
-    margin-bottom: 30px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
 }
 
 #corruption-label {
     color: #00BFFF;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: bold;
-    margin-bottom: 10px;
     text-shadow: 0 0 5px #00BFFF;
     letter-spacing: 1px;
+    white-space: nowrap;
 }
 
 #corruption-meter-container {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
+    min-width: 150px;
 }
 
 #corruption-meter {
     flex: 1;
-    height: 20px;
+    height: 16px;  /* Slightly smaller for compact layout */
     background: rgba(0, 0, 0, 0.8);
     border: 2px solid #00FF41;
     border-radius: 2px;
     overflow: hidden;
     position: relative;
+    min-width: 100px;
 }
 
 #corruption-fill {
@@ -459,24 +474,27 @@ h1 {
     min-width: 30px;
 }
 
-/* Firewall status indicators */
+/* Firewall status indicators - Compact horizontal layout */
 #firewall-status {
-    margin-top: 20px;
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    align-items: center;
 }
 
 .status-line {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 8px;
-    font-size: 11px;
+    gap: 4px;
+    font-size: 10px;
     color: #00FF41;
     text-shadow: 0 0 3px #00FF41;
+    white-space: nowrap;
 }
 
 .status-indicator {
-    width: 8px;
-    height: 8px;
+    width: 6px;  /* Smaller for compact layout */
+    height: 6px;
     border-radius: 50%;
     display: inline-block;
 }
@@ -1342,30 +1360,38 @@ h1 {
     }
 }
 
-/* Responsive design for HUD and Canvas */
+/* Responsive design for compact top HUD */
 @media (max-width: 768px) {
     #hud-top {
-        height: 50px;
-        padding: 0 15px;
-        font-size: 12px;
+        height: 45px;
+        padding: 6px 15px;
+        font-size: 11px;
+        gap: 10px;
     }
     
-    #hud-side {
-        width: 200px;
-        top: 50px;
-        padding: 15px;
+    #hud-left-section, #hud-center-section, #hud-right-section {
+        gap: 8px;
+    }
+    
+    #corruption-meter-container {
+        min-width: 120px;
     }
     
     #corruption-label {
-        font-size: 11px;
+        font-size: 9px;
     }
     
     #corruption-percentage {
-        font-size: 11px;
+        font-size: 9px;
     }
     
     .status-line {
-        font-size: 10px;
+        font-size: 8px;
+        gap: 3px;
+    }
+    
+    #firewall-status {
+        gap: 8px;
     }
     
     /* Canvas remains full screen */
@@ -1377,27 +1403,57 @@ h1 {
 
 @media (max-width: 480px) {
     #hud-top {
-        height: 45px;
-        padding: 0 10px;
-        font-size: 11px;
-        flex-direction: column;
-        justify-content: center;
+        height: 40px;  /* Very compact for mobile */
+        padding: 4px 10px;
+        font-size: 9px;
         gap: 5px;
     }
     
-    #hud-side {
-        width: 180px;
-        top: 45px;
-        padding: 10px;
+    #hud-left-section, #hud-center-section, #hud-right-section {
+        gap: 5px;
+    }
+    
+    #hud-left-section {
+        flex: 0.8;
+    }
+    
+    #hud-center-section {
+        flex: 1.4;
+    }
+    
+    #hud-right-section {
+        flex: 0.8;
     }
     
     #corruption-meter {
-        height: 16px;
+        height: 12px;
+    }
+    
+    #corruption-meter-container {
+        min-width: 80px;
+    }
+    
+    #corruption-label {
+        font-size: 8px;
     }
     
     .status-indicator {
-        width: 6px;
-        height: 6px;
+        width: 4px;
+        height: 4px;
+    }
+    
+    .status-line {
+        font-size: 7px;
+        gap: 2px;
+    }
+    
+    #firewall-status {
+        gap: 4px;
+    }
+    
+    /* Hide some status indicators on very small screens */
+    .status-line:nth-child(3) {
+        display: none;
     }
     
     /* Canvas remains full screen on mobile */
@@ -1416,15 +1472,17 @@ h1 {
 /* Landscape orientation optimizations */
 @media (max-height: 500px) and (orientation: landscape) {
     #hud-top {
-        height: 40px;
-        font-size: 10px;
+        height: 35px;  /* Very compact for landscape */
+        font-size: 9px;
+        padding: 4px 15px;
     }
     
-    #hud-side {
-        width: 160px;
-        top: 40px;
-        padding: 8px;
-        font-size: 10px;
+    #hud-left-section, #hud-center-section, #hud-right-section {
+        gap: 8px;
+    }
+    
+    #corruption-meter-container {
+        min-width: 100px;
     }
     
     /* Canvas remains full screen in landscape */
@@ -1434,16 +1492,20 @@ h1 {
     }
     
     .status-line {
-        font-size: 9px;
-        margin-bottom: 4px;
+        font-size: 7px;
     }
     
     #corruption-label {
-        font-size: 9px;
+        font-size: 7px;
     }
     
     #corruption-meter {
-        height: 14px;
+        height: 10px;
+    }
+    
+    .status-indicator {
+        width: 4px;
+        height: 4px;
     }
 }
 

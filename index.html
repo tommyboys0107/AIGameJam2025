@@ -100,43 +100,49 @@
             </div>
             
             <div id="hud">
-                <!-- Top HUD bar -->
+                <!-- Unified Top HUD bar with all information -->
                 <div id="hud-top">
-                    <div id="system-status">
-                        <span id="system-label">SYSTEM STATUS:</span>
-                        <span id="status-message">OPERATIONAL</span>
-                    </div>
-                    <div id="phase-info">
-                        <span id="phase-label">PHASE:</span>
-                        <span id="current-phase">CODE</span>
-                        <span id="phase-timer">15s</span>
-                    </div>
-                </div>
-                
-                <!-- Side HUD panel -->
-                <div id="hud-side">
-                    <div id="corruption-panel">
-                        <div id="corruption-label">CORRUPTION LEVEL</div>
-                        <div id="corruption-meter-container">
-                            <div id="corruption-meter">
-                                <div id="corruption-fill"></div>
-                            </div>
-                            <div id="corruption-percentage">0%</div>
+                    <!-- Left section: System Status and Phase -->
+                    <div id="hud-left-section">
+                        <div id="system-status">
+                            <span id="system-label">SYSTEM STATUS:</span>
+                            <span id="status-message">OPERATIONAL</span>
+                        </div>
+                        <div id="phase-info">
+                            <span id="phase-label">PHASE:</span>
+                            <span id="current-phase">CODE</span>
+                            <span id="phase-timer">15s</span>
                         </div>
                     </div>
                     
-                    <div id="firewall-status">
-                        <div class="status-line">
-                            <span class="status-indicator active"></span>
-                            <span>FIREWALL ACTIVE</span>
+                    <!-- Center section: Corruption Level -->
+                    <div id="hud-center-section">
+                        <div id="corruption-panel">
+                            <div id="corruption-label">CORRUPTION LEVEL</div>
+                            <div id="corruption-meter-container">
+                                <div id="corruption-meter">
+                                    <div id="corruption-fill"></div>
+                                </div>
+                                <div id="corruption-percentage">0%</div>
+                            </div>
                         </div>
-                        <div class="status-line">
-                            <span class="status-indicator active"></span>
-                            <span>NEURAL LINK OK</span>
-                        </div>
-                        <div class="status-line">
-                            <span class="status-indicator warning"></span>
-                            <span>AI DETECTED</span>
+                    </div>
+                    
+                    <!-- Right section: Firewall Status -->
+                    <div id="hud-right-section">
+                        <div id="firewall-status">
+                            <div class="status-line">
+                                <span class="status-indicator active"></span>
+                                <span>FIREWALL ACTIVE</span>
+                            </div>
+                            <div class="status-line">
+                                <span class="status-indicator active"></span>
+                                <span>NEURAL LINK OK</span>
+                            </div>
+                            <div class="status-line">
+                                <span class="status-indicator warning"></span>
+                                <span>AI DETECTED</span>
+                            </div>
                         </div>
                     </div>
                 </div>
