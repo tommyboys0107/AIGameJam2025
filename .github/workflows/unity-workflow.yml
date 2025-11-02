@@ -46,6 +46,7 @@ jobs:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          customImage: 'unityci/editor:ubuntu-6000.2.7f2-base-3'
         with:
           targetPlatform: ${{ matrix.targetPlatform }}
           buildMethod: CliffLeeCL.ProjectBuilder.BuildProject
@@ -74,6 +75,7 @@ jobs:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          customImage: 'unityci/editor:ubuntu-6000.2.7f2-webgl-3'
         with:
           targetPlatform: WebGL
           buildMethod: CliffLeeCL.ProjectBuilder.BuildProject
