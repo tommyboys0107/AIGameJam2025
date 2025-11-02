@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Minimal Image Test</title>
+    <style>
+        body { background: #000; color: #0f0; font-family: monospace; padding: 20px; }
+        canvas { border: 1px solid #0ff; margin: 10px 0; }
+        .status { margin: 10px 0; padding: 10px; border: 1px solid #0f0; }
+    </style>
+</head>
+<body>
+    <h1>最簡圖片測試</h1>
+    
+    <div class="status" id="status">準備測試...</div>
+    
+    <h2>HTML 圖片標籤測試</h2>
+    <img id="htmlImg" style="max-width: 200px; border: 1px solid #0ff;">
+    
+    <h2>Canvas 測試</h2>
+    <canvas id="canvas" width="400" height="300"></canvas>
+    
+    <script>
+        const status = document.getElementById('status');
+        const htmlImg = document.getElementById('htmlImg');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        function updateStatus(msg) {
+            status.textContent = msg;
+            console.log(msg);
+        }
+        
+        // Test 1: HTML img tag
+        updateStatus('測試 1: HTML img 標籤載入...');
+        htmlImg.onload = function() {
+            updateStatus('✅ HTML img 標籤成功載入圖片');
+            testCanvasDrawing();
+        };
+        htmlImg.onerror = function() {
+            updateStatus('❌ HTML img 標籤載入失敗');
+        };
+        htmlImg.src = 'assets/images/Safe1.jpg';
+        
+        // Test 2: Canvas drawing
+        function testCanvasDrawing() {
+            updateStatus('測試 2: Canvas 繪製...');
+            
+            const img = new Image();
+            img.onload = function() {
+                try {
+                    ctx.fillStyle = '#000';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    ctx.drawImage(img, 10, 10, 180, 120);
+                    
+                    ctx.fillStyle = '#0f0';
+                    ctx.font = '16px monospace';
+                    ctx.fillText('Safe1.jpg', 10, 150);
+                    
+                    updateStatus('✅ Canvas 繪製成功');
+                    testMultipleImages();
+                } catch (error) {
+                    updateStatus('❌ Canvas 繪製失敗: ' + error.message);
+                }
+            };
+            img.onerror = function() {
+                updateStatus('❌ Canvas 圖片載入失敗');
+            };
+            img.src = 'assets/images/Safe1.jpg';
+        }
+        
+        // Test 3: Multiple images
+        function testMultipleImages() {
+            updateStatus('測試 3: 多張圖片載入...');
+            
+            const images = [
+                'assets/images/Safe2.jpg',
+                'assets/images/Corrupted1.jpg'
+            ];
+            
+            let loaded = 0;
+            let failed = 0;
+            
+            images.forEach((src, index) => {
+                const img = new Image();
+                img.onload = function() {
+                    loaded++;
+                    ctx.drawImage(img, 200 + index * 90, 10, 80, 60);
+                    ctx.fillStyle = '#0f0';
+                    ctx.font = '12px monospace';
+                    ctx.fillText(`Img${index + 2}`, 200 + index * 90, 80);
+                    
+                    if (loaded + failed === images.length) {
+                        updateStatus(`✅ 多張圖片測試完成: ${loaded} 成功, ${failed} 失敗`);
+                    }
+                };
+                img.onerror = function() {
+                    failed++;
+                    if (loaded + failed === images.length) {
+                        updateStatus(`⚠️ 多張圖片測試完成: ${loaded} 成功, ${failed} 失敗`);
+                    }
+                };
+                img.src = src;
+            });
+        }
+    </script>
+</body>
+</html>

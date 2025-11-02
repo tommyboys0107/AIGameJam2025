@@ -25,23 +25,41 @@ export class ContentProvider {
      */
     async loadContentConfigurations() {
         try {
+            console.log('🔄 Loading content configurations...');
+            
             // Load all content configuration files in parallel
             const [textResponse, imageResponse] = await Promise.all([
                 fetch('data/textContent.json'),
                 fetch('data/imageContent.json')
             ]);
 
+            // Check if responses are ok
+            if (!textResponse.ok) {
+                throw new Error(`Failed to load textContent.json: ${textResponse.status} ${textResponse.statusText}`);
+            }
+            if (!imageResponse.ok) {
+                throw new Error(`Failed to load imageContent.json: ${imageResponse.status} ${imageResponse.statusText}`);
+            }
+
             // Parse JSON responses
             this.textContent = await textResponse.json();
             this.imageContent = await imageResponse.json();
+
+            console.log('📄 Text content loaded:', this.textContent);
+            console.log('🖼️ Image content loaded:', this.imageContent);
 
             // Validate loaded content
             this.validateContent();
             
             this.isLoaded = true;
-            console.log('Content configurations loaded successfully');
+            console.log('✅ Content configurations loaded successfully');
+            
+            // Log image counts for debugging
+            console.log(`📊 Image counts - Safe: ${this.imageContent.legitimate?.length || 0}, Corrupted: ${this.imageContent.corrupted?.length || 0}`);
+            
         } catch (error) {
-            console.error('Failed to load content configurations:', error);
+            console.error('❌ Failed to load content configurations:', error);
+            console.log('🔄 Setting up fallback content...');
             this.setupFallbackContent();
         }
     }
@@ -78,14 +96,22 @@ export class ContentProvider {
             corrupted: ['System 0p3r@t!0n@l', 'Connection 3st@bl!sh3d', 'Data v@l!d@t3d']
         };
 
+        // Use actual existing images for fallback
         this.imageContent = {
-            legitimate: ['assets/images/default.png'],
-            corrupted: ['assets/images/error.png']
+            legitimate: [
+                'assets/images/Safe1.jpg',
+                'assets/images/Safe2.jpg',
+                'assets/images/Safe3.jpg'
+            ],
+            corrupted: [
+                'assets/images/Corrupted1.jpg',
+                'assets/images/Corrupted2.jpg',
+                'assets/images/Corrupted3.jpg'
+            ]
         };
 
-
-
         this.isLoaded = true;
+        console.log('Fallback content setup with existing image paths');
     }
 
     /**
@@ -117,6 +143,7 @@ export class ContentProvider {
                 contentType = ContentType.IMAGE;
                 contentArray = isCorrupted ? this.imageContent.corrupted : this.imageContent.legitimate;
                 contentImage = this.getRandomFromArray(contentArray);
+                console.log(`ContentProvider: Selected ${isCorrupted ? 'corrupted' : 'safe'} image: ${contentImage}`);
                 break;
             
             default:
@@ -129,7 +156,7 @@ export class ContentProvider {
         // Use neutral color for all content to avoid visual hints
         const displayColor = '#00BFFF'; // Cyan color for all content
 
-        return new InformationObjectData(
+        const objectData = new InformationObjectData(
             contentType,
             contentText,
             contentImage,
@@ -137,6 +164,9 @@ export class ContentProvider {
             isCorrupted ? Math.random() * 0.5 + 0.5 : 0, // Corruption severity 0.5-1.0 for corrupted, 0 for legitimate
             displayColor
         );
+        
+        console.log(`ContentProvider: Created object data - Type: ${contentType}, Image: ${contentImage}, Corrupted: ${isCorrupted}`);
+        return objectData;
     }
 
     /**

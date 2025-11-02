@@ -15,8 +15,12 @@ export class InformationObject {
         // Position and dimensions
         this.x = x;
         this.y = y;
-        this.width = 280;  // Much larger width for full-screen visibility
-        this.height = 140; // Much larger height for full-screen visibility
+        
+        // Default dimensions (will be adjusted for images based on aspect ratio)
+        this.baseWidth = 280;   // Base width for consistent sizing
+        this.baseHeight = 140;  // Base height for consistent sizing
+        this.width = this.baseWidth;
+        this.height = this.baseHeight;
         
         // Movement properties
         this.movementSpeed = movementSpeed;
@@ -43,6 +47,8 @@ export class InformationObject {
         // Image loading state (for image content)
         this.imageLoaded = false;
         this.imageElement = null;
+        this.originalImageWidth = 0;
+        this.originalImageHeight = 0;
         
         // Load image if content type is image
         if (this.contentType === ContentType.IMAGE && this.contentImage) {
@@ -55,26 +61,103 @@ export class InformationObject {
      * @private
      */
     loadImage() {
+        if (!this.contentImage) {
+            console.error('No image path provided for image content');
+            this.fallbackToText();
+            return;
+        }
+
+        console.log(`🖼️ Starting image load: ${this.contentImage}`);
+        
         this.imageElement = new Image();
+        
+        // Set CORS attribute to handle cross-origin issues
+        this.imageElement.crossOrigin = 'anonymous';
+        
+        // Set up load success handler
         this.imageElement.onload = () => {
             this.imageLoaded = true;
-            // Adjust dimensions based on image aspect ratio
-            const aspectRatio = this.imageElement.width / this.imageElement.height;
-            if (aspectRatio > 1) {
-                this.width = 280;  // Much larger for full-screen images
-                this.height = 280 / aspectRatio;
-            } else {
-                this.height = 140; // Much larger for full-screen images
-                this.width = 140 * aspectRatio;
+            this.originalImageWidth = this.imageElement.naturalWidth;
+            this.originalImageHeight = this.imageElement.naturalHeight;
+            
+            console.log(`✅ Image loaded successfully: ${this.contentImage} (${this.originalImageWidth}x${this.originalImageHeight})`);
+            
+            // Adjust object dimensions based on image aspect ratio
+            this.adjustDimensionsForImage();
+        };
+        
+        // Set up error handler with detailed logging
+        this.imageElement.onerror = (error) => {
+            console.error(`❌ Failed to load image: ${this.contentImage}`);
+            console.error('Error details:', {
+                type: error.type,
+                target: error.target,
+                currentSrc: this.imageElement.currentSrc,
+                naturalWidth: this.imageElement.naturalWidth,
+                naturalHeight: this.imageElement.naturalHeight
+            });
+            this.fallbackToText();
+        };
+        
+        // Set up abort handler
+        this.imageElement.onabort = () => {
+            console.warn(`⚠️ Image load aborted: ${this.contentImage}`);
+            this.fallbackToText();
+        };
+        
+        // Add timeout for slow loading images (reduced to 5 seconds)
+        const loadTimeout = setTimeout(() => {
+            if (!this.imageLoaded) {
+                console.warn(`⏰ Image load timeout: ${this.contentImage}`);
+                this.fallbackToText();
             }
+        }, 5000); // 5 second timeout
+        
+        // Clear timeout when image loads
+        const originalOnload = this.imageElement.onload;
+        this.imageElement.onload = (e) => {
+            clearTimeout(loadTimeout);
+            originalOnload.call(this, e);
         };
-        this.imageElement.onerror = () => {
-            console.warn(`Failed to load image: ${this.contentImage}`);
-            // Fallback to text rendering
-            this.contentType = ContentType.TEXT;
-            this.contentText = this.isCorrupted ? '[CORRUPTED IMAGE]' : '[IMAGE]';
-        };
-        this.imageElement.src = this.contentImage;
+        
+        // Start loading the image with path normalization
+        try {
+            let imagePath = this.contentImage;
+            
+            // Normalize the path - ensure it's properly formatted
+            if (!imagePath.startsWith('http') && !imagePath.startsWith('./') && !imagePath.startsWith('/')) {
+                // If it's a relative path without proper prefix, ensure it starts correctly
+                if (!imagePath.startsWith('assets/')) {
+                    imagePath = 'assets/images/' + imagePath;
+                }
+            }
+            
+            console.log(`📂 Normalized image path: ${imagePath}`);
+            this.imageElement.src = imagePath;
+            
+        } catch (error) {
+            console.error(`❌ Error setting image src: ${this.contentImage}`, error);
+            this.fallbackToText();
+        }
+    }
+
+    /**
+     * Fallback to text rendering when image fails
+     * @private
+     */
+    fallbackToText() {
+        console.log(`🔄 Falling back to text for: ${this.contentImage}`);
+        this.contentType = ContentType.TEXT;
+        this.contentText = this.isCorrupted ? '[CORRUPTED IMAGE]' : '[IMAGE]';
+        this.imageLoaded = false;
+        
+        // Clean up image element
+        if (this.imageElement) {
+            this.imageElement.onload = null;
+            this.imageElement.onerror = null;
+            this.imageElement.onabort = null;
+            this.imageElement = null;
+        }
     }
 
     /**
@@ -186,30 +269,101 @@ export class InformationObject {
      */
     renderImage(ctx) {
         if (this.imageLoaded && this.imageElement) {
-            // Draw image centered in the object bounds
-            const imgX = this.x + (this.width - this.width) / 2;
-            const imgY = this.y + (this.height - this.height) / 2;
-            
-            ctx.drawImage(
-                this.imageElement,
-                this.x + 5, // Small padding
-                this.y + 5,
-                this.width - 10,
-                this.height - 10
-            );
+            try {
+                // Draw image with padding inside the object bounds
+                const padding = 5;
+                ctx.drawImage(
+                    this.imageElement,
+                    this.x + padding,
+                    this.y + padding,
+                    this.width - (padding * 2),
+                    this.height - (padding * 2)
+                );
+                
+                // Add debug border for images (optional, can be removed)
+                if (window.DEBUG_IMAGES) {
+                    ctx.strokeStyle = this.isCorrupted ? '#FF4444' : '#00FF41';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(this.x + padding, this.y + padding, this.width - (padding * 2), this.height - (padding * 2));
+                }
+                
+            } catch (error) {
+                console.error(`Error rendering image: ${this.contentImage}`, error);
+                this.renderImageFallback(ctx);
+            }
         } else {
-            // Show loading text or fallback
-            ctx.fillStyle = this.displayColor;
-            ctx.font = `${this.fontSize}px ${this.fontFamily}`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            
-            const loadingText = this.imageLoaded ? '[IMG]' : 'Loading...';
+            this.renderImageFallback(ctx);
+        }
+    }
+
+    /**
+     * Renders fallback content when image is not available
+     * @param {CanvasRenderingContext2D} ctx - Canvas rendering context
+     * @private
+     */
+    renderImageFallback(ctx) {
+        ctx.fillStyle = this.displayColor;
+        ctx.font = `${this.fontSize}px ${this.fontFamily}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        let displayText;
+        if (this.contentType === ContentType.TEXT) {
+            // Already fell back to text
+            displayText = this.contentText;
+        } else if (this.imageLoaded) {
+            displayText = '[IMG]';
+        } else {
+            // Show loading or error state
+            if (this.imageElement && this.imageElement.src) {
+                displayText = 'Loading...';
+            } else {
+                displayText = 'Image Error';
+            }
+        }
+        
+        // Add debug info if enabled
+        if (window.DEBUG_IMAGES) {
+            displayText += `\n${this.contentImage || 'No path'}`;
+            if (this.imageElement) {
+                displayText += `\nSrc: ${this.imageElement.src}`;
+                displayText += `\nComplete: ${this.imageElement.complete}`;
+                displayText += `\nNatural: ${this.imageElement.naturalWidth}x${this.imageElement.naturalHeight}`;
+            }
+        }
+        
+        const lines = displayText.split('\n');
+        const lineHeight = this.fontSize + 4;
+        const startY = this.y + this.height / 2 - (lines.length - 1) * lineHeight / 2;
+        
+        lines.forEach((line, index) => {
             ctx.fillText(
-                loadingText,
+                line,
                 this.x + this.width / 2,
-                this.y + this.height / 2
+                startY + index * lineHeight
             );
+        });
+        
+        // Add visual indicator for image loading state
+        if (this.contentType === ContentType.IMAGE) {
+            const indicatorSize = 10;
+            const indicatorX = this.x + this.width - indicatorSize - 5;
+            const indicatorY = this.y + 5;
+            
+            if (this.imageLoaded) {
+                // Green circle for loaded
+                ctx.fillStyle = '#00FF41';
+            } else if (this.imageElement && this.imageElement.src) {
+                // Yellow circle for loading
+                ctx.fillStyle = '#FFA500';
+            } else {
+                // Red circle for error
+                ctx.fillStyle = '#FF4444';
+            }
+            
+            ctx.beginPath();
+            ctx.arc(indicatorX + indicatorSize/2, indicatorY + indicatorSize/2, indicatorSize/2, 0, Math.PI * 2);
+            ctx.fill();
         }
     }
 

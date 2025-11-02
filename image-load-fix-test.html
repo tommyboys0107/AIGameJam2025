@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Load Fix Test</title>
+    <style>
+        body {
+            background: #000;
+            color: #00FF41;
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+        }
+        .test-section {
+            border: 1px solid #00FF41;
+            margin: 15px 0;
+            padding: 15px;
+        }
+        button {
+            background: #00FF41;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+        }
+        button:hover {
+            background: #00BFFF;
+        }
+        canvas {
+            border: 2px solid #00BFFF;
+            display: block;
+            margin: 10px 0;
+        }
+        .log {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #333;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+        .success { color: #00FF41; }
+        .error { color: #FF4444; }
+        .warning { color: #FFA500; }
+    </style>
+</head>
+<body>
+    <h1>圖片載入修復測試</h1>
+    
+    <div class="test-section">
+        <h3>步驟 1: 基本圖片測試</h3>
+        <button onclick="testBasicImageLoad()">測試基本圖片載入</button>
+        <div id="basicResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>步驟 2: 修復版 InformationObject 測試</h3>
+        <button onclick="testFixedInformationObject()">測試修復版物件</button>
+        <canvas id="testCanvas" width="600" height="400"></canvas>
+    </div>
+    
+    <div class="test-section">
+        <h3>步驟 3: 完整遊戲流程測試</h3>
+        <button onclick="testFullGameFlow()">測試完整流程</button>
+        <div id="gameFlowResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>測試日誌</h3>
+        <div id="log" class="log"></div>
+    </div>
+
+    <script type="module">
+        import { GamePhase, ContentType } from './js/core/constants.js';
+        import { ContentProvider } from './js/content/ContentProvider.js';
+        import { InformationObjectData } from './js/core/dataClasses.js';
+
+        const canvas = document.getElementById('testCanvas');
+        const ctx = canvas.getContext('2d');
+        const logDiv = document.getElementById('log');
+
+        function log(message, type = 'info') {
+            const time = new Date().toLocaleTimeString();
+            const div = document.createElement('div');
+            div.className = type;
+            div.textContent = `[${time}] ${message}`;
+            logDiv.appendChild(div);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        // 修復版的 InformationObject 類別
+        class FixedInformationObject {
+            constructor(data, x = 0, y = 0, movementSpeed = 2.0) {
+                // Position and dimensions
+                this.x = x;
+                this.y = y;
+                this.width = 280;
+                this.height = 140;
+                
+                // Movement properties
+                this.movementSpeed = movementSpeed;
+                this.isActive = true;
+                
+                // Content properties
+                this.contentType = data.contentType;
+                this.contentText = data.contentText;
+                this.contentImage = data.contentImage;
+                this.isCorrupted = data.isCorrupted;
+                this.corruptionSeverity = data.corruptionSeverity;
+                this.displayColor = data.displayColor;
+                
+                // Visual properties
+                this.fontSize = 24;
+                this.fontFamily = 'Courier New, monospace';
+                this.borderColor = '#00BFFF';
+                this.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+                
+                // Image loading state
+                this.imageLoaded = false;
+                this.imageElement = null;
+                this.imageLoadAttempted = false;
+                
+                log(`創建物件: 類型=${this.contentType}, 圖片=${this.contentImage}, 損壞=${this.isCorrupted}`);
+                
+                // Load image if content type is image
+                if (this.contentType === ContentType.IMAGE && this.contentImage) {
+                    this.loadImageWithFix();
+                }
+            }
+
+            loadImageWithFix() {
+                if (!this.contentImage || this.imageLoadAttempted) {
+                    return;
+                }
+
+                this.imageLoadAttempted = true;
+                log(`🔄 開始載入圖片: ${this.contentImage}`);
+                
+                this.imageElement = new Image();
+                
+                // 設定 CORS 屬性
+                this.imageElement.crossOrigin = 'anonymous';
+                
+                // 成功載入處理器
+                this.imageElement.onload = () => {
+                    this.imageLoaded = true;
+                    log(`✅ 圖片載入成功: ${this.contentImage} (${this.imageElement.width}x${this.imageElement.height})`, 'success');
+                };
+                
+                // 錯誤處理器
+                this.imageElement.onerror = (error) => {
+                    log(`❌ 圖片載入失敗: ${this.contentImage}`, 'error');
+                    log(`錯誤詳情: ${error.type || 'Unknown error'}`, 'error');
+                    this.fallbackToText();
+                };
+                
+                // 中止處理器
+                this.imageElement.onabort = () => {
+                    log(`⚠️ 圖片載入被中止: ${this.contentImage}`, 'warning');
+                    this.fallbackToText();
+                };
+                
+                // 設定超時
+                const timeout = setTimeout(() => {
+                    if (!this.imageLoaded) {
+                        log(`⏰ 圖片載入超時: ${this.contentImage}`, 'warning');
+                        this.fallbackToText();
+                    }
+                }, 5000);
+                
+                // 載入成功時清除超時
+                const originalOnload = this.imageElement.onload;
+                this.imageElement.onload = (e) => {
+                    clearTimeout(timeout);
+                    originalOnload.call(this, e);
+                };
+                
+                // 開始載入
+                try {
+                    // 嘗試不同的路徑格式
+                    let imagePath = this.contentImage;
+                    
+                    // 確保路徑格式正確
+                    if (!imagePath.startsWith('http') && !imagePath.startsWith('./') && !imagePath.startsWith('/')) {
+                        if (!imagePath.startsWith('assets/')) {
+                            imagePath = 'assets/images/' + imagePath;
+                        }
+                    }
+                    
+                    log(`📂 使用路徑: ${imagePath}`);
+                    this.imageElement.src = imagePath;
+                    
+                } catch (error) {
+                    log(`❌ 設定圖片來源時發生錯誤: ${error.message}`, 'error');
+                    this.fallbackToText();
+                }
+            }
+
+            fallbackToText() {
+                log(`🔄 切換到文字模式: ${this.contentImage}`);
+                this.contentType = ContentType.TEXT;
+                this.contentText = this.isCorrupted ? '[損壞圖片]' : '[圖片]';
+                this.imageLoaded = false;
+                
+                if (this.imageElement) {
+                    this.imageElement.onload = null;
+                    this.imageElement.onerror = null;
+                    this.imageElement.onabort = null;
+                    this.imageElement = null;
+                }
+            }
+
+            render(ctx) {
+                if (!this.isActive) return;
+
+                ctx.save();
+
+                // Draw background
+                ctx.fillStyle = this.backgroundColor;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+
+                // Draw border
+                ctx.strokeStyle = this.borderColor;
+                ctx.lineWidth = 3;
+                ctx.strokeRect(this.x, this.y, this.width, this.height);
+
+                // Render content
+                if (this.contentType === ContentType.IMAGE && this.imageLoaded && this.imageElement) {
+                    try {
+                        const padding = 5;
+                        ctx.drawImage(
+                            this.imageElement,
+                            this.x + padding,
+                            this.y + padding,
+                            this.width - (padding * 2),
+                            this.height - (padding * 2)
+                        );
+                        
+                        // 添加成功標記
+                        ctx.fillStyle = '#00FF41';
+                        ctx.font = '12px Courier New';
+                        ctx.textAlign = 'left';
+                        ctx.fillText('✅ 圖片已載入', this.x + 5, this.y + this.height - 5);
+                        
+                    } catch (error) {
+                        log(`❌ 渲染圖片時發生錯誤: ${error.message}`, 'error');
+                        this.renderText(ctx);
+                    }
+                } else {
+                    this.renderText(ctx);
+                }
+
+                ctx.restore();
+            }
+
+            renderText(ctx) {
+                ctx.fillStyle = this.displayColor;
+                ctx.font = `${this.fontSize}px ${this.fontFamily}`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                let displayText = this.contentText;
+                if (this.contentType === ContentType.IMAGE) {
+                    if (this.imageLoadAttempted && !this.imageLoaded) {
+                        displayText = this.isCorrupted ? '[損壞圖片載入失敗]' : '[圖片載入失敗]';
+                    } else if (!this.imageLoadAttempted) {
+                        displayText = '載入中...';
+                    }
+                }
+
+                ctx.fillText(
+                    displayText,
+                    this.x + this.width / 2,
+                    this.y + this.height / 2
+                );
+                
+                // 顯示圖片路徑（調試用）
+                if (this.contentImage) {
+                    ctx.fillStyle = '#888';
+                    ctx.font = '10px Courier New';
+                    ctx.fillText(
+                        this.contentImage,
+                        this.x + this.width / 2,
+                        this.y + this.height / 2 + 20
+                    );
+                }
+            }
+
+            isObjectActive() {
+                return this.isActive;
+            }
+        }
+
+        // 測試函數
+        window.testBasicImageLoad = async function() {
+            log('=== 開始基本圖片載入測試 ===');
+            const resultDiv = document.getElementById('basicResult');
+            
+            try {
+                const img = new Image();
+                const loadPromise = new Promise((resolve, reject) => {
+                    img.onload = () => resolve(img);
+                    img.onerror = reject;
+                    setTimeout(() => reject(new Error('Timeout')), 5000);
+                });
+                
+                img.src = 'assets/images/Safe1.jpg';
+                const loadedImg = await loadPromise;
+                
+                resultDiv.innerHTML = `<span class="success">✅ 基本圖片載入成功 (${loadedImg.width}x${loadedImg.height})</span>`;
+                log('✅ 基本圖片載入測試通過', 'success');
+                return true;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ 基本圖片載入失敗: ${error.message}</span>`;
+                log(`❌ 基本圖片載入測試失敗: ${error.message}`, 'error');
+                return false;
+            }
+        };
+
+        window.testFixedInformationObject = async function() {
+            log('=== 開始修復版 InformationObject 測試 ===');
+            
+            try {
+                // 清除畫布
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // 創建測試物件
+                const testObjects = [];
+                
+                // 安全圖片物件
+                const safeData = new InformationObjectData(
+                    ContentType.IMAGE,
+                    '',
+                    'assets/images/Safe1.jpg',
+                    false,
+                    0,
+                    '#00BFFF'
+                );
+                const safeObj = new FixedInformationObject(safeData, 50, 50, 0);
+                testObjects.push(safeObj);
+                
+                // 損壞圖片物件
+                const corruptedData = new InformationObjectData(
+                    ContentType.IMAGE,
+                    '',
+                    'assets/images/Corrupted1.jpg',
+                    true,
+                    0.8,
+                    '#00BFFF'
+                );
+                const corruptedObj = new FixedInformationObject(corruptedData, 350, 50, 0);
+                testObjects.push(corruptedObj);
+                
+                log(`創建了 ${testObjects.length} 個測試物件`);
+                
+                // 渲染循環
+                let renderCount = 0;
+                const maxRenders = 100; // 10秒 (100 * 100ms)
+                
+                const renderLoop = setInterval(() => {
+                    renderCount++;
+                    
+                    // 清除畫布
+                    ctx.fillStyle = '#000';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // 渲染物件
+                    testObjects.forEach((obj, index) => {
+                        obj.render(ctx);
+                        
+                        // 添加標籤
+                        ctx.fillStyle = '#00FF41';
+                        ctx.font = '14px Courier New';
+                        ctx.textAlign = 'left';
+                        ctx.fillText(
+                            `${index + 1}: ${obj.isCorrupted ? '損壞' : '安全'} - ${obj.imageLoaded ? '已載入' : '載入中'}`,
+                            obj.x,
+                            obj.y - 15
+                        );
+                    });
+                    
+                    // 顯示統計
+                    ctx.fillStyle = '#00BFFF';
+                    ctx.font = '16px Courier New';
+                    ctx.textAlign = 'left';
+                    ctx.fillText(`渲染: ${renderCount}/${maxRenders}`, 10, 30);
+                    
+                    const loadedCount = testObjects.filter(obj => obj.imageLoaded).length;
+                    ctx.fillText(`已載入: ${loadedCount}/${testObjects.length}`, 10, 50);
+                    
+                    // 檢查是否完成
+                    if (renderCount >= maxRenders || loadedCount === testObjects.length) {
+                        clearInterval(renderLoop);
+                        
+                        const finalLoadedCount = testObjects.filter(obj => obj.imageLoaded).length;
+                        if (finalLoadedCount > 0) {
+                            log(`✅ 修復版測試成功: ${finalLoadedCount}/${testObjects.length} 個圖片載入`, 'success');
+                        } else {
+                            log(`❌ 修復版測試失敗: 沒有圖片成功載入`, 'error');
+                        }
+                    }
+                }, 100);
+                
+            } catch (error) {
+                log(`❌ 修復版 InformationObject 測試失敗: ${error.message}`, 'error');
+            }
+        };
+
+        window.testFullGameFlow = async function() {
+            log('=== 開始完整遊戲流程測試 ===');
+            const resultDiv = document.getElementById('gameFlowResult');
+            
+            try {
+                // 初始化 ContentProvider
+                const contentProvider = new ContentProvider();
+                await contentProvider.loadContent();
+                
+                if (!contentProvider.isContentLoaded()) {
+                    throw new Error('ContentProvider 載入失敗');
+                }
+                
+                // 測試獲取圖片內容
+                const safeContent = contentProvider.getRandomContent(GamePhase.ART, false);
+                const corruptedContent = contentProvider.getRandomContent(GamePhase.ART, true);
+                
+                log(`獲取安全圖片: ${safeContent.contentImage}`);
+                log(`獲取損壞圖片: ${corruptedContent.contentImage}`);
+                
+                // 創建修復版物件
+                const safeObj = new FixedInformationObject(safeContent, 50, 250, 0);
+                const corruptedObj = new FixedInformationObject(corruptedContent, 350, 250, 0);
+                
+                // 等待載入
+                setTimeout(() => {
+                    const loadedCount = [safeObj, corruptedObj].filter(obj => obj.imageLoaded).length;
+                    
+                    if (loadedCount > 0) {
+                        resultDiv.innerHTML = `<span class="success">✅ 完整流程測試成功: ${loadedCount}/2 個圖片載入</span>`;
+                        log(`✅ 完整流程測試成功: ${loadedCount}/2`, 'success');
+                    } else {
+                        resultDiv.innerHTML = `<span class="error">❌ 完整流程測試失敗: 沒有圖片載入</span>`;
+                        log('❌ 完整流程測試失敗', 'error');
+                    }
+                }, 3000);
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ 完整流程測試失敗: ${error.message}</span>`;
+                log(`❌ 完整流程測試失敗: ${error.message}`, 'error');
+            }
+        };
+
+        log('🔧 圖片載入修復測試準備完成');
+        log('💡 請按順序執行測試以診斷問題');
+    </script>
+</body>
+</html>

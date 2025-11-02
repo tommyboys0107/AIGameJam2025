@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Loading Test</title>
+    <style>
+        body {
+            background: #000;
+            color: #00FF41;
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            border: 1px solid #00FF41;
+            padding: 10px;
+        }
+        img {
+            max-width: 200px;
+            max-height: 200px;
+            border: 2px solid #00BFFF;
+            margin: 5px;
+        }
+        .error {
+            color: #FF4444;
+        }
+        .success {
+            color: #00FF41;
+        }
+    </style>
+</head>
+<body>
+    <h1>Human Firewall - Image Loading Test</h1>
+    
+    <div class="test-section">
+        <h2>Safe Images Test</h2>
+        <div id="safe-images"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Corrupted Images Test</h2>
+        <div id="corrupted-images"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Loading Results</h2>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const safeImages = [
+            "assets/images/Safe1.jpg",
+            "assets/images/Safe2.jpg",
+            "assets/images/Safe3.jpg",
+            "assets/images/Safe4.jpg",
+            "assets/images/Safe5.jpg",
+            "assets/images/Safe6.jpg",
+            "assets/images/Safe7.jpg",
+            "assets/images/Safe8.jpg"
+        ];
+
+        const corruptedImages = [
+            "assets/images/Corrupted1.jpg",
+            "assets/images/Corrupted2.jpg",
+            "assets/images/Corrupted3.jpg",
+            "assets/images/Corrupted4.jpg",
+            "assets/images/Corrupted5.jpg",
+            "assets/images/Corrupted6.jpg",
+            "assets/images/Corrupted7.jpg",
+            "assets/images/Corrupted8.jpg",
+            "assets/images/Corrupted9.jpg"
+        ];
+
+        let loadedCount = 0;
+        let errorCount = 0;
+        const totalImages = safeImages.length + corruptedImages.length;
+
+        function testImageLoad(imagePath, container, type) {
+            const img = document.createElement('img');
+            const label = document.createElement('div');
+            label.textContent = imagePath;
+            
+            img.onload = function() {
+                loadedCount++;
+                label.className = 'success';
+                label.textContent += ' ✓ LOADED';
+                updateResults();
+            };
+            
+            img.onerror = function() {
+                errorCount++;
+                label.className = 'error';
+                label.textContent += ' ✗ FAILED';
+                updateResults();
+            };
+            
+            img.src = imagePath;
+            container.appendChild(img);
+            container.appendChild(label);
+        }
+
+        function updateResults() {
+            const results = document.getElementById('results');
+            results.innerHTML = `
+                <div class="success">Loaded: ${loadedCount}/${totalImages}</div>
+                <div class="error">Failed: ${errorCount}/${totalImages}</div>
+                <div>Progress: ${((loadedCount + errorCount) / totalImages * 100).toFixed(1)}%</div>
+            `;
+        }
+
+        // Test safe images
+        const safeContainer = document.getElementById('safe-images');
+        safeImages.forEach(path => testImageLoad(path, safeContainer, 'safe'));
+
+        // Test corrupted images
+        const corruptedContainer = document.getElementById('corrupted-images');
+        corruptedImages.forEach(path => testImageLoad(path, corruptedContainer, 'corrupted'));
+
+        // Initial results
+        updateResults();
+    </script>
+</body>
+</html>

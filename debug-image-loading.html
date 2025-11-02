@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Image Loading</title>
+    <style>
+        body {
+            background: #000;
+            color: #00FF41;
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+        }
+        canvas {
+            border: 2px solid #00BFFF;
+            margin: 10px 0;
+        }
+        .log {
+            background: rgba(0, 255, 65, 0.1);
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 3px solid #00FF41;
+            font-size: 12px;
+        }
+        .error {
+            background: rgba(255, 68, 68, 0.1);
+            border-left-color: #FF4444;
+            color: #FF4444;
+        }
+    </style>
+</head>
+<body>
+    <h1>Human Firewall - Debug Image Loading</h1>
+    
+    <div>
+        <h2>Canvas Test</h2>
+        <canvas id="testCanvas" width="600" height="400"></canvas>
+    </div>
+    
+    <div>
+        <h2>Log Output</h2>
+        <div id="logOutput"></div>
+    </div>
+
+    <script type="module">
+        import { ContentType } from './js/core/constants.js';
+        import { InformationObjectData } from './js/core/dataClasses.js';
+        import { InformationObject } from './js/core/InformationObject.js';
+
+        const canvas = document.getElementById('testCanvas');
+        const ctx = canvas.getContext('2d');
+        const logOutput = document.getElementById('logOutput');
+
+        function log(message, isError = false) {
+            console.log(message);
+            const div = document.createElement('div');
+            div.className = isError ? 'log error' : 'log';
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logOutput.appendChild(div);
+            logOutput.scrollTop = logOutput.scrollHeight;
+        }
+
+        // Test image paths
+        const testImages = [
+            'assets/images/Safe1.jpg',
+            'assets/images/Safe2.jpg',
+            'assets/images/Corrupted1.jpg',
+            'assets/images/Corrupted2.jpg'
+        ];
+
+        let testIndex = 0;
+        let currentObject = null;
+
+        function testNextImage() {
+            if (testIndex >= testImages.length) {
+                log('All image tests completed!');
+                return;
+            }
+
+            const imagePath = testImages[testIndex];
+            const isCorrupted = imagePath.includes('Corrupted');
+            
+            log(`Testing image ${testIndex + 1}/${testImages.length}: ${imagePath}`);
+
+            // Create InformationObjectData
+            const objectData = new InformationObjectData(
+                ContentType.IMAGE,
+                '',
+                imagePath,
+                isCorrupted,
+                isCorrupted ? 0.8 : 0,
+                '#00BFFF'
+            );
+
+            // Create InformationObject
+            currentObject = new InformationObject(objectData, 50, 50, 1.0);
+
+            // Wait for image to load and then render
+            setTimeout(() => {
+                renderCurrentObject();
+                testIndex++;
+                setTimeout(testNextImage, 3000); // Wait 3 seconds before next test
+            }, 1000);
+        }
+
+        function renderCurrentObject() {
+            // Clear canvas
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            if (currentObject) {
+                // Render the object
+                currentObject.render(ctx);
+
+                // Add debug info
+                ctx.fillStyle = '#00FF41';
+                ctx.font = '14px Courier New';
+                ctx.textAlign = 'left';
+                ctx.fillText(`Image: ${currentObject.contentImage}`, 10, 20);
+                ctx.fillText(`Loaded: ${currentObject.imageLoaded}`, 10, 40);
+                ctx.fillText(`Corrupted: ${currentObject.isCorrupted}`, 10, 60);
+                ctx.fillText(`Type: ${currentObject.contentType}`, 10, 80);
+
+                if (currentObject.imageLoaded) {
+                    log(`✓ Image loaded successfully: ${currentObject.contentImage}`);
+                } else {
+                    log(`✗ Image failed to load: ${currentObject.contentImage}`, true);
+                }
+            }
+        }
+
+        // Start animation loop
+        function animate() {
+            if (currentObject) {
+                renderCurrentObject();
+            }
+            requestAnimationFrame(animate);
+        }
+
+        log('Starting image loading tests...');
+        testNextImage();
+        animate();
+
+        // Add click handler to manually advance
+        canvas.addEventListener('click', () => {
+            testIndex++;
+            testNextImage();
+        });
+    </script>
+</body>
+</html>

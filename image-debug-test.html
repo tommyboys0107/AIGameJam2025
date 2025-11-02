@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Debug Test</title>
+    <style>
+        body {
+            background: #000;
+            color: #00FF41;
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+            margin: 0;
+        }
+        .debug-panel {
+            border: 1px solid #00FF41;
+            margin: 10px 0;
+            padding: 15px;
+        }
+        button {
+            background: #00FF41;
+            color: #000;
+            border: none;
+            padding: 8px 15px;
+            margin: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+        }
+        button:hover {
+            background: #00BFFF;
+        }
+        canvas {
+            border: 2px solid #00BFFF;
+            display: block;
+            margin: 10px 0;
+        }
+        .log {
+            background: rgba(0, 255, 65, 0.1);
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 3px solid #00FF41;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .error {
+            color: #FF4444;
+            border-left-color: #FF4444;
+            background: rgba(255, 68, 68, 0.1);
+        }
+        .success {
+            color: #00FF41;
+        }
+        .warning {
+            color: #FFA500;
+        }
+    </style>
+</head>
+<body>
+    <h1>Human Firewall - Image Debug Test</h1>
+    
+    <div class="debug-panel">
+        <h3>Debug Controls</h3>
+        <button onclick="enableDebugMode()">Enable Debug Mode</button>
+        <button onclick="testImagePaths()">Test Image Paths</button>
+        <button onclick="testGameObjects()">Test Game Objects</button>
+        <button onclick="testFullGameFlow()">Test Full Game Flow</button>
+        <button onclick="clearCanvas()">Clear Canvas</button>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+    
+    <div class="debug-panel">
+        <h3>Canvas Test Area</h3>
+        <canvas id="debugCanvas" width="800" height="600"></canvas>
+    </div>
+    
+    <div class="debug-panel">
+        <h3>Debug Log</h3>
+        <div id="debugLog" class="log"></div>
+    </div>
+
+    <script type="module">
+        import { GamePhase, ContentType } from './js/core/constants.js';
+        import { ContentProvider } from './js/content/ContentProvider.js';
+        import { InformationObject } from './js/core/InformationObject.js';
+        import { InformationObjectData } from './js/core/dataClasses.js';
+
+        const canvas = document.getElementById('debugCanvas');
+        const ctx = canvas.getContext('2d');
+        const logDiv = document.getElementById('debugLog');
+
+        let contentProvider = null;
+        let testObjects = [];
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const div = document.createElement('div');
+            div.className = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : '';
+            div.textContent = `[${timestamp}] ${message}`;
+            logDiv.appendChild(div);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        function enableDebugMode() {
+            window.DEBUG_IMAGES = true;
+            log('Debug mode enabled - images will show debug borders and paths', 'success');
+        }
+
+        async function testImagePaths() {
+            log('=== Testing Image Paths ===');
+            
+            const testPaths = [
+                'assets/images/Safe1.jpg',
+                'assets/images/Safe2.jpg',
+                'assets/images/Corrupted1.jpg',
+                'assets/images/Corrupted2.jpg'
+            ];
+
+            for (const path of testPaths) {
+                try {
+                    const result = await testSingleImagePath(path);
+                    if (result.success) {
+                        log(`✅ ${path}: ${result.width}x${result.height}`, 'success');
+                    } else {
+                        log(`❌ ${path}: ${result.error}`, 'error');
+                    }
+                } catch (error) {
+                    log(`❌ ${path}: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        function testSingleImagePath(imagePath) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                const startTime = Date.now();
+                
+                img.onload = function() {
+                    const loadTime = Date.now() - startTime;
+                    resolve({
+                        success: true,
+                        width: this.width,
+                        height: this.height,
+                        loadTime: loadTime
+                    });
+                };
+                
+                img.onerror = function(error) {
+                    resolve({
+                        success: false,
+                        error: 'Failed to load'
+                    });
+                };
+                
+                // Timeout after 5 seconds
+                setTimeout(() => {
+                    resolve({
+                        success: false,
+                        error: 'Timeout after 5 seconds'
+                    });
+                }, 5000);
+                
+                img.src = imagePath;
+            });
+        }
+
+        async function testGameObjects() {
+            log('=== Testing Game Objects ===');
+            
+            // Initialize content provider if not already done
+            if (!contentProvider) {
+                log('Initializing ContentProvider...');
+                contentProvider = new ContentProvider();
+                try {
+                    await contentProvider.loadContent();
+                    log('ContentProvider loaded successfully', 'success');
+                } catch (error) {
+                    log(`ContentProvider failed: ${error.message}`, 'error');
+                    return;
+                }
+            }
+
+            // Clear existing objects
+            testObjects = [];
+            
+            // Create test objects
+            try {
+                // Safe image
+                const safeData = contentProvider.getRandomContent(GamePhase.ART, false);
+                const safeObj = new InformationObject(safeData, 50, 50, 0);
+                testObjects.push(safeObj);
+                log(`Created safe object: ${safeData.contentImage}`);
+                
+                // Corrupted image
+                const corruptedData = contentProvider.getRandomContent(GamePhase.ART, true);
+                const corruptedObj = new InformationObject(corruptedData, 350, 50, 0);
+                testObjects.push(corruptedObj);
+                log(`Created corrupted object: ${corruptedData.contentImage}`);
+                
+                // Another safe image
+                const safeData2 = contentProvider.getRandomContent(GamePhase.ART, false);
+                const safeObj2 = new InformationObject(safeData2, 50, 250, 0);
+                testObjects.push(safeObj2);
+                log(`Created safe object 2: ${safeData2.contentImage}`);
+                
+                // Another corrupted image
+                const corruptedData2 = contentProvider.getRandomContent(GamePhase.ART, true);
+                const corruptedObj2 = new InformationObject(corruptedData2, 350, 250, 0);
+                testObjects.push(corruptedObj2);
+                log(`Created corrupted object 2: ${corruptedData2.contentImage}`);
+                
+                log(`Created ${testObjects.length} test objects`, 'success');
+                
+                // Wait a bit for images to load
+                setTimeout(() => {
+                    const loadedCount = testObjects.filter(obj => obj.imageLoaded).length;
+                    log(`After 3 seconds: ${loadedCount}/${testObjects.length} images loaded`);
+                }, 3000);
+                
+            } catch (error) {
+                log(`Error creating test objects: ${error.message}`, 'error');
+            }
+        }
+
+        async function testFullGameFlow() {
+            log('=== Testing Full Game Flow ===');
+            
+            // This simulates what happens in the actual game
+            try {
+                // 1. Initialize ContentProvider
+                if (!contentProvider) {
+                    contentProvider = new ContentProvider();
+                    await contentProvider.loadContent();
+                }
+                
+                // 2. Simulate phase change to ART
+                log('Simulating phase change to ART...');
+                
+                // 3. Spawn objects like the game would
+                testObjects = [];
+                for (let i = 0; i < 4; i++) {
+                    const isCorrupted = Math.random() < 0.5;
+                    const contentData = contentProvider.getRandomContent(GamePhase.ART, isCorrupted);
+                    
+                    const x = Math.random() * (canvas.width - 280);
+                    const y = Math.random() * (canvas.height - 140);
+                    
+                    const obj = new InformationObject(contentData, x, y, 1.0);
+                    testObjects.push(obj);
+                    
+                    log(`Spawned ${isCorrupted ? 'corrupted' : 'safe'} object: ${contentData.contentImage}`);
+                }
+                
+                log('Full game flow test completed', 'success');
+                
+            } catch (error) {
+                log(`Full game flow test failed: ${error.message}`, 'error');
+            }
+        }
+
+        function clearCanvas() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            log('Canvas cleared');
+        }
+
+        function clearLog() {
+            logDiv.innerHTML = '';
+        }
+
+        // Animation loop
+        function animate() {
+            // Clear canvas
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Render test objects
+            testObjects.forEach((obj, index) => {
+                if (obj.isObjectActive()) {
+                    obj.render(ctx);
+                    
+                    // Add object info
+                    ctx.fillStyle = '#00FF41';
+                    ctx.font = '12px Courier New';
+                    ctx.textAlign = 'left';
+                    ctx.fillText(
+                        `${index + 1}: ${obj.isCorrupted ? 'CORRUPT' : 'SAFE'} - ${obj.imageLoaded ? 'LOADED' : 'LOADING'}`,
+                        obj.x,
+                        obj.y - 15
+                    );
+                    
+                    if (window.DEBUG_IMAGES) {
+                        ctx.fillText(
+                            obj.contentImage || 'No path',
+                            obj.x,
+                            obj.y + obj.height + 15
+                        );
+                    }
+                }
+            });
+            
+            // Show object count
+            ctx.fillStyle = '#00BFFF';
+            ctx.font = '16px Courier New';
+            ctx.textAlign = 'left';
+            ctx.fillText(`Objects: ${testObjects.length}`, 10, 30);
+            
+            if (testObjects.length > 0) {
+                const loadedCount = testObjects.filter(obj => obj.imageLoaded).length;
+                ctx.fillText(`Loaded: ${loadedCount}/${testObjects.length}`, 10, 50);
+            }
+            
+            requestAnimationFrame(animate);
+        }
+
+        // Make functions global
+        window.enableDebugMode = enableDebugMode;
+        window.testImagePaths = testImagePaths;
+        window.testGameObjects = testGameObjects;
+        window.testFullGameFlow = testFullGameFlow;
+        window.clearCanvas = clearCanvas;
+        window.clearLog = clearLog;
+
+        // Start animation
+        animate();
+        
+        log('Image debug test ready. Click buttons to run tests.');
+        log('Tip: Enable debug mode first to see detailed image information.');
+    </script>
+</body>
+</html>

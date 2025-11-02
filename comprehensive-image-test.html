@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprehensive Image Test</title>
+    <style>
+        body {
+            background: #000;
+            color: #00FF41;
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+            margin: 0;
+        }
+        .test-section {
+            border: 1px solid #00FF41;
+            margin: 10px 0;
+            padding: 15px;
+        }
+        .test-section h3 {
+            color: #00BFFF;
+            margin-top: 0;
+        }
+        button {
+            background: #00FF41;
+            color: #000;
+            border: none;
+            padding: 8px 15px;
+            margin: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+        }
+        button:hover {
+            background: #00BFFF;
+        }
+        canvas {
+            border: 2px solid #00BFFF;
+            display: block;
+            margin: 10px 0;
+        }
+        .log {
+            background: rgba(0, 255, 65, 0.1);
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 3px solid #00FF41;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .error {
+            color: #FF4444;
+            border-left-color: #FF4444;
+            background: rgba(255, 68, 68, 0.1);
+        }
+        .success {
+            color: #00FF41;
+        }
+        .warning {
+            color: #FFA500;
+        }
+        .status {
+            display: inline-block;
+            padding: 2px 6px;
+            margin: 2px;
+            border-radius: 3px;
+            font-size: 10px;
+        }
+        .status.pass {
+            background: #00FF41;
+            color: #000;
+        }
+        .status.fail {
+            background: #FF4444;
+            color: #FFF;
+        }
+        .status.pending {
+            background: #FFA500;
+            color: #000;
+        }
+    </style>
+</head>
+<body>
+    <h1>Human Firewall - Comprehensive Image Test</h1>
+    
+    <div class="test-section">
+        <h3>Test Status</h3>
+        <div id="test-status">
+            <span class="status pending">Content Provider</span>
+            <span class="status pending">Image Loading</span>
+            <span class="status pending">Phase System</span>
+            <span class="status pending">Object Creation</span>
+            <span class="status pending">Canvas Rendering</span>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test Controls</h3>
+        <button onclick="runAllTests()">Run All Tests</button>
+        <button onclick="testContentProvider()">Test Content Provider</button>
+        <button onclick="testImageLoading()">Test Image Loading</button>
+        <button onclick="testPhaseSystem()">Test Phase System</button>
+        <button onclick="testObjectCreation()">Test Object Creation</button>
+        <button onclick="testCanvasRendering()">Test Canvas Rendering</button>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>Canvas Test Area</h3>
+        <canvas id="testCanvas" width="800" height="400"></canvas>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test Log</h3>
+        <div id="testLog" class="log"></div>
+    </div>
+
+    <script type="module">
+        import { GamePhase, ContentType } from './js/core/constants.js';
+        import { ContentProvider } from './js/content/ContentProvider.js';
+        import { InformationObject } from './js/core/InformationObject.js';
+        import { InformationObjectData } from './js/core/dataClasses.js';
+        import { PhaseManager } from './js/managers/PhaseManager.js';
+        import { PhaseSettings } from './js/core/dataClasses.js';
+
+        const canvas = document.getElementById('testCanvas');
+        const ctx = canvas.getContext('2d');
+        const logDiv = document.getElementById('testLog');
+
+        let contentProvider = null;
+        let phaseManager = null;
+        let testObjects = [];
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const div = document.createElement('div');
+            div.className = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : '';
+            div.textContent = `[${timestamp}] ${message}`;
+            logDiv.appendChild(div);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function updateStatus(testName, status) {
+            const statusElements = document.querySelectorAll('.status');
+            statusElements.forEach(el => {
+                if (el.textContent === testName) {
+                    el.className = `status ${status}`;
+                }
+            });
+        }
+
+        async function testContentProvider() {
+            log('=== Testing Content Provider ===');
+            
+            try {
+                contentProvider = new ContentProvider();
+                log('ContentProvider instance created');
+                
+                await contentProvider.loadContent();
+                log('Content loading completed', 'success');
+                
+                if (contentProvider.isContentLoaded()) {
+                    log('Content provider reports loaded status: true', 'success');
+                    updateStatus('Content Provider', 'pass');
+                    
+                    // Test getting content
+                    const safeImageContent = contentProvider.getRandomContent(GamePhase.ART, false);
+                    const corruptedImageContent = contentProvider.getRandomContent(GamePhase.ART, true);
+                    
+                    log(`Safe image content: ${safeImageContent.contentImage}`);
+                    log(`Corrupted image content: ${corruptedImageContent.contentImage}`);
+                    
+                    return true;
+                } else {
+                    log('Content provider reports loaded status: false', 'error');
+                    updateStatus('Content Provider', 'fail');
+                    return false;
+                }
+                
+            } catch (error) {
+                log(`ContentProvider test failed: ${error.message}`, 'error');
+                updateStatus('Content Provider', 'fail');
+                return false;
+            }
+        }
+
+        async function testImageLoading() {
+            log('=== Testing Image Loading ===');
+            
+            const testImages = [
+                'assets/images/Safe1.jpg',
+                'assets/images/Corrupted1.jpg'
+            ];
+            
+            let loadedCount = 0;
+            let errorCount = 0;
+            
+            for (const imagePath of testImages) {
+                try {
+                    await new Promise((resolve, reject) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            log(`✓ Image loaded: ${imagePath} (${img.width}x${img.height})`, 'success');
+                            loadedCount++;
+                            resolve();
+                        };
+                        img.onerror = () => {
+                            log(`✗ Image failed to load: ${imagePath}`, 'error');
+                            errorCount++;
+                            reject(new Error(`Failed to load ${imagePath}`));
+                        };
+                        img.src = imagePath;
+                    });
+                } catch (error) {
+                    // Error already logged in onerror handler
+                }
+            }
+            
+            if (errorCount === 0) {
+                log(`All ${loadedCount} images loaded successfully`, 'success');
+                updateStatus('Image Loading', 'pass');
+                return true;
+            } else {
+                log(`${errorCount} images failed to load`, 'error');
+                updateStatus('Image Loading', 'fail');
+                return false;
+            }
+        }
+
+        async function testPhaseSystem() {
+            log('=== Testing Phase System ===');
+            
+            try {
+                const settings = new PhaseSettings(5000, 60000, 1.2); // 5 second phases for testing
+                phaseManager = new PhaseManager(settings);
+                
+                log('PhaseManager created');
+                
+                // Test phase change callback
+                let phaseChangeCount = 0;
+                phaseManager.onPhaseChange = (phase, phaseNumber, difficulty) => {
+                    phaseChangeCount++;
+                    log(`Phase change ${phaseChangeCount}: ${phase} (${phaseNumber}), difficulty: ${difficulty.toFixed(2)}`);
+                };
+                
+                phaseManager.startGame();
+                log('PhaseManager started');
+                
+                const initialPhase = phaseManager.getCurrentPhase();
+                log(`Initial phase: ${initialPhase}`);
+                
+                // Force advance to ART phase
+                phaseManager.forcePhase(GamePhase.ART);
+                const artPhase = phaseManager.getCurrentPhase();
+                log(`Forced to ART phase: ${artPhase}`);
+                
+                if (artPhase === GamePhase.ART) {
+                    log('Phase system working correctly', 'success');
+                    updateStatus('Phase System', 'pass');
+                    return true;
+                } else {
+                    log('Phase system not working correctly', 'error');
+                    updateStatus('Phase System', 'fail');
+                    return false;
+                }
+                
+            } catch (error) {
+                log(`Phase system test failed: ${error.message}`, 'error');
+                updateStatus('Phase System', 'fail');
+                return false;
+            }
+        }
+
+        async function testObjectCreation() {
+            log('=== Testing Object Creation ===');
+            
+            if (!contentProvider || !contentProvider.isContentLoaded()) {
+                log('ContentProvider not ready for object creation test', 'error');
+                updateStatus('Object Creation', 'fail');
+                return false;
+            }
+            
+            try {
+                // Test creating safe image object
+                const safeImageData = contentProvider.getRandomContent(GamePhase.ART, false);
+                const safeObject = new InformationObject(safeImageData, 50, 50, 1.0);
+                
+                log(`Safe object created: type=${safeObject.contentType}, image=${safeObject.contentImage}`);
+                
+                // Test creating corrupted image object
+                const corruptedImageData = contentProvider.getRandomContent(GamePhase.ART, true);
+                const corruptedObject = new InformationObject(corruptedImageData, 200, 50, 1.0);
+                
+                log(`Corrupted object created: type=${corruptedObject.contentType}, image=${corruptedObject.contentImage}`);
+                
+                testObjects = [safeObject, corruptedObject];
+                
+                log('Object creation test passed', 'success');
+                updateStatus('Object Creation', 'pass');
+                return true;
+                
+            } catch (error) {
+                log(`Object creation test failed: ${error.message}`, 'error');
+                updateStatus('Object Creation', 'fail');
+                return false;
+            }
+        }
+
+        async function testCanvasRendering() {
+            log('=== Testing Canvas Rendering ===');
+            
+            if (testObjects.length === 0) {
+                log('No test objects available for rendering test', 'error');
+                updateStatus('Canvas Rendering', 'fail');
+                return false;
+            }
+            
+            try {
+                // Clear canvas
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Wait a bit for images to load
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                // Render test objects
+                testObjects.forEach((obj, index) => {
+                    log(`Rendering object ${index + 1}: loaded=${obj.imageLoaded}, type=${obj.contentType}`);
+                    obj.render(ctx);
+                    
+                    // Add debug label
+                    ctx.fillStyle = '#00FF41';
+                    ctx.font = '12px Courier New';
+                    ctx.textAlign = 'left';
+                    ctx.fillText(
+                        `${index + 1}: ${obj.isCorrupted ? 'CORRUPT' : 'SAFE'} - ${obj.imageLoaded ? 'LOADED' : 'LOADING'}`,
+                        obj.x,
+                        obj.y - 10
+                    );
+                });
+                
+                // Check if any images are loaded
+                const loadedImages = testObjects.filter(obj => obj.imageLoaded).length;
+                
+                if (loadedImages > 0) {
+                    log(`Canvas rendering test passed: ${loadedImages}/${testObjects.length} images rendered`, 'success');
+                    updateStatus('Canvas Rendering', 'pass');
+                    return true;
+                } else {
+                    log('Canvas rendering test failed: no images loaded', 'error');
+                    updateStatus('Canvas Rendering', 'fail');
+                    return false;
+                }
+                
+            } catch (error) {
+                log(`Canvas rendering test failed: ${error.message}`, 'error');
+                updateStatus('Canvas Rendering', 'fail');
+                return false;
+            }
+        }
+
+        async function runAllTests() {
+            log('Starting comprehensive test suite...');
+            
+            // Reset status
+            document.querySelectorAll('.status').forEach(el => {
+                el.className = 'status pending';
+            });
+            
+            const results = [];
+            
+            results.push(await testContentProvider());
+            results.push(await testImageLoading());
+            results.push(await testPhaseSystem());
+            results.push(await testObjectCreation());
+            results.push(await testCanvasRendering());
+            
+            const passedTests = results.filter(r => r).length;
+            const totalTests = results.length;
+            
+            if (passedTests === totalTests) {
+                log(`All tests passed! (${passedTests}/${totalTests})`, 'success');
+            } else {
+                log(`${passedTests}/${totalTests} tests passed`, 'warning');
+            }
+        }
+
+        function clearLog() {
+            logDiv.innerHTML = '';
+        }
+
+        // Make functions available globally
+        window.runAllTests = runAllTests;
+        window.testContentProvider = testContentProvider;
+        window.testImageLoading = testImageLoading;
+        window.testPhaseSystem = testPhaseSystem;
+        window.testObjectCreation = testObjectCreation;
+        window.testCanvasRendering = testCanvasRendering;
+        window.clearLog = clearLog;
+
+        // Auto-start animation loop for rendering
+        function animate() {
+            if (testObjects.length > 0) {
+                // Clear canvas
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Render objects
+                testObjects.forEach((obj, index) => {
+                    obj.render(ctx);
+                    
+                    // Add debug info
+                    ctx.fillStyle = '#00FF41';
+                    ctx.font = '12px Courier New';
+                    ctx.textAlign = 'left';
+                    ctx.fillText(
+                        `${index + 1}: ${obj.isCorrupted ? 'CORRUPT' : 'SAFE'} - ${obj.imageLoaded ? 'LOADED' : 'LOADING'}`,
+                        obj.x,
+                        obj.y - 10
+                    );
+                });
+            }
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+        
+        log('Comprehensive test ready. Click "Run All Tests" to begin.');
+    </script>
+</body>
+</html>
