@@ -28,6 +28,10 @@ export class GameManager {
         // Animation frame reference
         this.animationFrameId = null;
         
+        // Background image
+        this.backgroundImage = null;
+        this.loadBackgroundImage();
+        
         // Bind methods to maintain context
         this.gameLoop = this.gameLoop.bind(this);
     }
@@ -812,11 +816,57 @@ export class GameManager {
         // Clear canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+        // Render background image
+        this.renderBackground(ctx, canvas);
+
         // Render data stream objects
         this.dataStreamGenerator.render(ctx);
 
         // Render visual feedback effects on top
         this.visualFeedbackSystem.render(ctx);
+    }
+
+    /**
+     * Load the background image for the game canvas
+     * @private
+     */
+    loadBackgroundImage() {
+        this.backgroundImage = new Image();
+        this.backgroundImage.onload = () => {
+            console.log('Game background image loaded successfully');
+        };
+        this.backgroundImage.onerror = (error) => {
+            console.warn('Failed to load game background image:', error);
+            this.backgroundImage = null;
+        };
+        this.backgroundImage.src = 'assets/GameBackground.jpg';
+    }
+
+    /**
+     * Render the background image on the canvas
+     * @param {CanvasRenderingContext2D} ctx - Canvas rendering context
+     * @param {HTMLCanvasElement} canvas - Canvas element
+     * @private
+     */
+    renderBackground(ctx, canvas) {
+        if (this.backgroundImage && this.backgroundImage.complete) {
+            // Save current context state
+            ctx.save();
+            
+            // Draw background image to fill the entire canvas
+            ctx.drawImage(this.backgroundImage, 0, 0, canvas.width, canvas.height);
+            
+            // Add a subtle overlay to maintain the cyberpunk aesthetic
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Restore context state
+            ctx.restore();
+        } else {
+            // Fallback: render the original black background
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
     }
 
     /**
