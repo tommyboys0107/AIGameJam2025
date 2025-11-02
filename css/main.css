@@ -44,10 +44,705 @@ body {
     background-color: #000000;
 }
 
-/* Basic styling - detailed styles will be added in UI tasks */
+/* Basic styling */
 h1 {
     color: #00BFFF;
     font-size: 2.5rem;
     margin-bottom: 1rem;
     text-shadow: 0 0 10px #00BFFF;
+}
+
+/* HUD Interface Styles */
+#hud {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* Grid overlay for retro aesthetic */
+#grid-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        linear-gradient(rgba(0, 255, 65, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 65, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Top HUD bar */
+#hud-top {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.7) 100%);
+    border-bottom: 2px solid #00FF41;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    z-index: 20;
+}
+
+#system-status, #phase-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#system-label, #phase-label {
+    color: #00BFFF;
+    font-weight: bold;
+    text-shadow: 0 0 5px #00BFFF;
+}
+
+#status-message {
+    color: #00FF41;
+    font-weight: bold;
+    text-shadow: 0 0 5px #00FF41;
+    animation: flicker 2s infinite alternate;
+}
+
+#current-phase {
+    color: #00FF41;
+    font-weight: bold;
+    text-shadow: 0 0 5px #00FF41;
+    padding: 2px 8px;
+    border: 1px solid #00FF41;
+    background: rgba(0, 255, 65, 0.1);
+}
+
+#phase-timer {
+    color: #00BFFF;
+    font-weight: bold;
+    text-shadow: 0 0 5px #00BFFF;
+}
+
+/* Side HUD panel */
+#hud-side {
+    position: absolute;
+    top: 60px;
+    right: 0;
+    width: 250px;
+    height: calc(100% - 60px);
+    background: linear-gradient(270deg, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.7) 100%);
+    border-left: 2px solid #00FF41;
+    padding: 20px;
+    z-index: 20;
+}
+
+/* Corruption meter */
+#corruption-panel {
+    margin-bottom: 30px;
+}
+
+#corruption-label {
+    color: #00BFFF;
+    font-size: 12px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    text-shadow: 0 0 5px #00BFFF;
+    letter-spacing: 1px;
+}
+
+#corruption-meter-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#corruption-meter {
+    flex: 1;
+    height: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    border: 2px solid #00FF41;
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+}
+
+#corruption-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #00FF41 0%, #FFD700 50%, #FF4500 100%);
+    transition: width 0.3s ease;
+    position: relative;
+}
+
+#corruption-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%);
+    animation: scan 2s infinite linear;
+}
+
+#corruption-percentage {
+    color: #00FF41;
+    font-size: 12px;
+    font-weight: bold;
+    text-shadow: 0 0 5px #00FF41;
+    min-width: 30px;
+}
+
+/* Firewall status indicators */
+#firewall-status {
+    margin-top: 20px;
+}
+
+.status-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    font-size: 11px;
+    color: #00FF41;
+    text-shadow: 0 0 3px #00FF41;
+}
+
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.status-indicator.active {
+    background: #00FF41;
+    box-shadow: 0 0 8px #00FF41;
+    animation: pulse 1.5s infinite;
+}
+
+.status-indicator.warning {
+    background: #FFD700;
+    box-shadow: 0 0 8px #FFD700;
+    animation: pulse 1s infinite;
+}
+
+.status-indicator.error {
+    background: #FF4500;
+    box-shadow: 0 0 8px #FF4500;
+    animation: pulse 0.5s infinite;
+}
+
+/* Animations */
+@keyframes flicker {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(0.8); }
+}
+
+@keyframes scan {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+@keyframes glitch {
+    0%, 100% { transform: translateX(0); }
+    10% { transform: translateX(-2px); }
+    20% { transform: translateX(2px); }
+    30% { transform: translateX(-1px); }
+    40% { transform: translateX(1px); }
+    50% { transform: translateX(-2px); }
+    60% { transform: translateX(2px); }
+    70% { transform: translateX(-1px); }
+    80% { transform: translateX(1px); }
+    90% { transform: translateX(-2px); }
+}
+
+/* Flickering effect for system messages */
+.flicker-text {
+    animation: flicker 0.5s infinite alternate;
+}
+
+.glitch-text {
+    animation: glitch 0.3s infinite;
+}
+
+/* Main Menu Styles */
+#main-menu {
+    background: radial-gradient(circle at center, rgba(0, 191, 255, 0.1) 0%, rgba(0, 0, 0, 0.9) 70%);
+    justify-content: center;
+    align-items: center;
+}
+
+#menu-content {
+    text-align: center;
+    max-width: 800px;
+    padding: 40px;
+    z-index: 10;
+    position: relative;
+}
+
+#title-section {
+    margin-bottom: 40px;
+}
+
+#main-title {
+    font-size: 4rem;
+    color: #00BFFF;
+    text-shadow: 0 0 20px #00BFFF, 0 0 40px #00BFFF;
+    letter-spacing: 4px;
+    margin-bottom: 20px;
+    animation: titleGlow 3s ease-in-out infinite alternate;
+}
+
+#activation-text {
+    font-size: 1.2rem;
+    color: #00FF41;
+    text-shadow: 0 0 10px #00FF41;
+    letter-spacing: 2px;
+    animation: typewriter 2s steps(12) infinite;
+}
+
+#narrative-section {
+    margin: 40px 0;
+    padding: 30px;
+    border: 2px solid #00FF41;
+    background: rgba(0, 255, 65, 0.05);
+    border-radius: 5px;
+}
+
+.narrative-text p {
+    color: #00FF41;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 15px;
+    text-shadow: 0 0 5px #00FF41;
+    animation: fadeInUp 0.8s ease-out forwards;
+    opacity: 0;
+}
+
+.narrative-text p:nth-child(1) { animation-delay: 0.5s; }
+.narrative-text p:nth-child(2) { animation-delay: 1s; }
+.narrative-text p:nth-child(3) { animation-delay: 1.5s; }
+.narrative-text p:nth-child(4) { animation-delay: 2s; }
+
+#menu-controls {
+    margin: 40px 0;
+}
+
+.menu-button {
+    background: linear-gradient(45deg, rgba(0, 191, 255, 0.2), rgba(0, 255, 65, 0.2));
+    border: 2px solid #00BFFF;
+    color: #00BFFF;
+    font-family: 'Courier New', monospace;
+    font-size: 1.2rem;
+    font-weight: bold;
+    padding: 20px 40px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    text-shadow: 0 0 10px #00BFFF;
+    box-shadow: 0 0 20px rgba(0, 191, 255, 0.3);
+}
+
+.menu-button:hover {
+    background: linear-gradient(45deg, rgba(0, 191, 255, 0.4), rgba(0, 255, 65, 0.4));
+    border-color: #00FF41;
+    color: #00FF41;
+    text-shadow: 0 0 15px #00FF41;
+    box-shadow: 0 0 30px rgba(0, 255, 65, 0.5);
+    transform: scale(1.05);
+}
+
+.menu-button:active {
+    transform: scale(0.98);
+}
+
+.menu-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.menu-button:hover::before {
+    left: 100%;
+}
+
+.button-text {
+    display: block;
+    font-size: 1.2rem;
+    margin-bottom: 5px;
+}
+
+.button-subtext {
+    display: block;
+    font-size: 0.8rem;
+    opacity: 0.8;
+    font-weight: normal;
+}
+
+#system-info {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(0, 255, 65, 0.3);
+}
+
+.info-line {
+    color: #00FF41;
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+    text-shadow: 0 0 5px #00FF41;
+    opacity: 0.8;
+}
+
+/* Menu background grid */
+#menu-grid-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        linear-gradient(rgba(0, 191, 255, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 191, 255, 0.1) 1px, transparent 1px);
+    background-size: 50px 50px;
+    animation: gridMove 20s linear infinite;
+    z-index: 1;
+}
+
+/* Menu Animations */
+@keyframes titleGlow {
+    0%, 100% { 
+        text-shadow: 0 0 20px #00BFFF, 0 0 40px #00BFFF;
+        transform: scale(1);
+    }
+    50% { 
+        text-shadow: 0 0 30px #00BFFF, 0 0 60px #00BFFF, 0 0 80px #00BFFF;
+        transform: scale(1.02);
+    }
+}
+
+@keyframes typewriter {
+    0%, 50% { content: 'ACTIVATING...'; }
+    51%, 100% { content: 'ACTIVATING'; }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes gridMove {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(50px, 50px); }
+}
+
+/* Responsive design for menu */
+@media (max-width: 768px) {
+    #main-title {
+        font-size: 2.5rem;
+        letter-spacing: 2px;
+    }
+    
+    #menu-content {
+        padding: 20px;
+        max-width: 90%;
+    }
+    
+    .narrative-text p {
+        font-size: 0.9rem;
+    }
+    
+    .menu-button {
+        padding: 15px 30px;
+        font-size: 1rem;
+    }
+}
+
+/* Game Over Overlay Styles */
+#game-over {
+    background: rgba(0, 0, 0, 0.95);
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 1s ease-out;
+}
+
+#game-over-content {
+    text-align: center;
+    max-width: 600px;
+    padding: 40px;
+    border: 2px solid #FF4500;
+    background: linear-gradient(135deg, rgba(255, 69, 0, 0.1), rgba(0, 0, 0, 0.9));
+    border-radius: 10px;
+    box-shadow: 0 0 50px rgba(255, 69, 0, 0.3);
+    z-index: 100;
+    position: relative;
+}
+
+#game-over.success #game-over-content {
+    border-color: #00BFFF;
+    background: linear-gradient(135deg, rgba(0, 191, 255, 0.1), rgba(0, 0, 0, 0.9));
+    box-shadow: 0 0 50px rgba(0, 191, 255, 0.3);
+}
+
+#game-over-header {
+    margin-bottom: 30px;
+}
+
+#game-over-title {
+    font-size: 2.5rem;
+    color: #FF4500;
+    text-shadow: 0 0 20px #FF4500;
+    letter-spacing: 3px;
+    margin-bottom: 10px;
+    animation: flicker 0.5s infinite alternate;
+}
+
+#game-over.success #game-over-title {
+    color: #00BFFF;
+    text-shadow: 0 0 20px #00BFFF;
+}
+
+#game-over-subtitle {
+    font-size: 1.2rem;
+    color: #FFD700;
+    text-shadow: 0 0 10px #FFD700;
+    letter-spacing: 2px;
+}
+
+#game-over.success #game-over-subtitle {
+    color: #00FF41;
+    text-shadow: 0 0 10px #00FF41;
+}
+
+#game-over-message {
+    margin: 30px 0;
+    padding: 20px;
+    border: 1px solid rgba(255, 69, 0, 0.3);
+    background: rgba(255, 69, 0, 0.05);
+    border-radius: 5px;
+}
+
+#game-over.success #game-over-message {
+    border-color: rgba(0, 191, 255, 0.3);
+    background: rgba(0, 191, 255, 0.05);
+}
+
+#primary-message {
+    font-size: 1.4rem;
+    color: #FF4500;
+    text-shadow: 0 0 10px #FF4500;
+    margin-bottom: 15px;
+    font-weight: bold;
+}
+
+#game-over.success #primary-message {
+    color: #00BFFF;
+    text-shadow: 0 0 10px #00BFFF;
+}
+
+#secondary-message {
+    font-size: 1rem;
+    color: #FFD700;
+    text-shadow: 0 0 5px #FFD700;
+    line-height: 1.5;
+}
+
+#game-over.success #secondary-message {
+    color: #00FF41;
+    text-shadow: 0 0 5px #00FF41;
+}
+
+#game-over-stats {
+    margin: 30px 0;
+    padding: 20px;
+    border: 1px solid rgba(0, 255, 65, 0.3);
+    background: rgba(0, 255, 65, 0.05);
+    border-radius: 5px;
+}
+
+.stat-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 1rem;
+}
+
+.stat-label {
+    color: #00FF41;
+    text-shadow: 0 0 5px #00FF41;
+}
+
+.stat-value {
+    color: #00BFFF;
+    text-shadow: 0 0 5px #00BFFF;
+    font-weight: bold;
+}
+
+#game-over-controls {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.game-over-button {
+    background: linear-gradient(45deg, rgba(0, 191, 255, 0.2), rgba(0, 255, 65, 0.2));
+    border: 2px solid #00BFFF;
+    color: #00BFFF;
+    font-family: 'Courier New', monospace;
+    font-size: 1rem;
+    font-weight: bold;
+    padding: 15px 25px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    text-shadow: 0 0 10px #00BFFF;
+    box-shadow: 0 0 15px rgba(0, 191, 255, 0.3);
+    border-radius: 5px;
+}
+
+.game-over-button:hover {
+    background: linear-gradient(45deg, rgba(0, 191, 255, 0.4), rgba(0, 255, 65, 0.4));
+    border-color: #00FF41;
+    color: #00FF41;
+    text-shadow: 0 0 15px #00FF41;
+    box-shadow: 0 0 25px rgba(0, 255, 65, 0.5);
+    transform: scale(1.05);
+}
+
+.game-over-button:active {
+    transform: scale(0.98);
+}
+
+.game-over-button .button-text {
+    display: block;
+    font-size: 1rem;
+    margin-bottom: 3px;
+}
+
+.game-over-button .button-subtext {
+    display: block;
+    font-size: 0.7rem;
+    opacity: 0.8;
+    font-weight: normal;
+}
+
+/* Glitch and screen effects */
+#glitch-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(255, 69, 0, 0.1) 2px,
+        rgba(255, 69, 0, 0.1) 4px
+    );
+    animation: screenFlicker 0.1s infinite;
+    pointer-events: none;
+    z-index: 50;
+}
+
+#game-over.success #glitch-overlay {
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 191, 255, 0.1) 2px,
+        rgba(0, 191, 255, 0.1) 4px
+    );
+}
+
+#data-flood {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, 
+        rgba(255, 69, 0, 0.1) 0%, 
+        rgba(255, 215, 0, 0.1) 25%, 
+        rgba(255, 69, 0, 0.1) 50%, 
+        rgba(255, 215, 0, 0.1) 75%, 
+        rgba(255, 69, 0, 0.1) 100%);
+    background-size: 20px 20px;
+    animation: dataFlood 2s linear infinite;
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0;
+}
+
+#game-over.failure #data-flood {
+    opacity: 0.3;
+}
+
+/* Game Over Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes screenFlicker {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+
+@keyframes dataFlood {
+    0% { transform: translateX(-20px) translateY(-20px); }
+    100% { transform: translateX(0) translateY(0); }
+}
+
+/* Responsive design for game over */
+@media (max-width: 768px) {
+    #game-over-content {
+        padding: 20px;
+        max-width: 90%;
+    }
+    
+    #game-over-title {
+        font-size: 2rem;
+    }
+    
+    #game-over-controls {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .game-over-button {
+        width: 100%;
+        max-width: 250px;
+    }
 }

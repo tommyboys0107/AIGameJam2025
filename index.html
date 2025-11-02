@@ -8,25 +8,134 @@
 </head>
 <body>
     <div id="game-container">
-        <!-- Main menu will be implemented in later tasks -->
+        <!-- Main menu -->
         <div id="main-menu" class="screen">
-            <h1>Human Firewall</h1>
-            <p>Activating...</p>
+            <div id="menu-content">
+                <div id="title-section">
+                    <h1 id="main-title">HUMAN FIREWALL</h1>
+                    <div id="activation-text">ACTIVATING...</div>
+                </div>
+                
+                <div id="narrative-section">
+                    <div class="narrative-text">
+                        <p>SYSTEM ALERT: AI OUTBREAK DETECTED</p>
+                        <p>Artificial intelligence has begun generating massive amounts of content.</p>
+                        <p>Human verification required to maintain reality integrity.</p>
+                        <p>Your neural patterns are needed to distinguish authentic data from AI corruption.</p>
+                    </div>
+                </div>
+                
+                <div id="menu-controls">
+                    <button id="start-button" class="menu-button">
+                        <span class="button-text">INITIALIZE FIREWALL</span>
+                        <span class="button-subtext">Click to begin human verification protocol</span>
+                    </button>
+                </div>
+                
+                <div id="system-info">
+                    <div class="info-line">STATUS: AWAITING HUMAN OPERATOR</div>
+                    <div class="info-line">PROTOCOL: CONTENT CLASSIFICATION</div>
+                    <div class="info-line">DURATION: 2 MINUTES MAXIMUM</div>
+                </div>
+            </div>
+            
+            <!-- Background grid effect -->
+            <div id="menu-grid-overlay"></div>
         </div>
 
-        <!-- Game canvas and HUD will be implemented in later tasks -->
+        <!-- Game canvas and HUD -->
         <div id="game-screen" class="screen hidden">
             <canvas id="game-canvas"></canvas>
             <div id="hud">
-                <!-- HUD elements will be added in later tasks -->
+                <!-- Top HUD bar -->
+                <div id="hud-top">
+                    <div id="system-status">
+                        <span id="system-label">SYSTEM STATUS:</span>
+                        <span id="status-message">OPERATIONAL</span>
+                    </div>
+                    <div id="phase-info">
+                        <span id="phase-label">PHASE:</span>
+                        <span id="current-phase">CODE</span>
+                        <span id="phase-timer">15s</span>
+                    </div>
+                </div>
+                
+                <!-- Side HUD panel -->
+                <div id="hud-side">
+                    <div id="corruption-panel">
+                        <div id="corruption-label">CORRUPTION LEVEL</div>
+                        <div id="corruption-meter-container">
+                            <div id="corruption-meter">
+                                <div id="corruption-fill"></div>
+                            </div>
+                            <div id="corruption-percentage">0%</div>
+                        </div>
+                    </div>
+                    
+                    <div id="firewall-status">
+                        <div class="status-line">
+                            <span class="status-indicator active"></span>
+                            <span>FIREWALL ACTIVE</span>
+                        </div>
+                        <div class="status-line">
+                            <span class="status-indicator active"></span>
+                            <span>NEURAL LINK OK</span>
+                        </div>
+                        <div class="status-line">
+                            <span class="status-indicator warning"></span>
+                            <span>AI DETECTED</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Grid overlay for retro aesthetic -->
+                <div id="grid-overlay"></div>
             </div>
         </div>
 
-        <!-- Game over overlay will be implemented in later tasks -->
+        <!-- Game over overlay -->
         <div id="game-over" class="screen hidden">
             <div id="game-over-content">
-                <!-- Game over content will be added in later tasks -->
+                <div id="game-over-header">
+                    <div id="game-over-title">SYSTEM STATUS</div>
+                    <div id="game-over-subtitle"></div>
+                </div>
+                
+                <div id="game-over-message">
+                    <div id="primary-message"></div>
+                    <div id="secondary-message"></div>
+                </div>
+                
+                <div id="game-over-stats">
+                    <div class="stat-line">
+                        <span class="stat-label">CORRUPTION LEVEL:</span>
+                        <span id="final-corruption" class="stat-value">0%</span>
+                    </div>
+                    <div class="stat-line">
+                        <span class="stat-label">ACCURACY:</span>
+                        <span id="final-accuracy" class="stat-value">0%</span>
+                    </div>
+                    <div class="stat-line">
+                        <span class="stat-label">SURVIVAL TIME:</span>
+                        <span id="survival-time" class="stat-value">0s</span>
+                    </div>
+                </div>
+                
+                <div id="game-over-controls">
+                    <button id="restart-button" class="game-over-button">
+                        <span class="button-text">RESTART FIREWALL</span>
+                        <span class="button-subtext">Initialize new session</span>
+                    </button>
+                    <button id="menu-button" class="game-over-button">
+                        <span class="button-text">RETURN TO MENU</span>
+                        <span class="button-subtext">Exit to main menu</span>
+                    </button>
+                </div>
             </div>
+            
+            <!-- Glitch overlay effects -->
+            <div id="glitch-overlay"></div>
+            <div id="data-flood"></div>
         </div>
     </div>
 
@@ -44,10 +153,18 @@
     <!-- Content modules -->
     <script type="module" src="js/content/ContentProvider.js"></script>
 
-    <!-- Main game initialization will be added in later tasks -->
+    <!-- Initialize UI components -->
     <script type="module">
-        // Game initialization will be implemented in later tasks
-        console.log('Human Firewall - Project structure initialized');
+        import { UIManager } from './js/ui/UIManager.js';
+        
+        // Initialize UI when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            const uiManager = new UIManager();
+            uiManager.initializeMainMenu();
+            uiManager.initializeGameOver();
+            
+            console.log('Human Firewall - UI System initialized');
+        });
     </script>
 </body>
 </html>
