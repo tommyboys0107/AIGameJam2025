@@ -16,6 +16,14 @@ export class ContentProvider {
      * Async method to load all content configurations from JSON files
      * @returns {Promise<void>}
      */
+    async loadContent() {
+        return this.loadContentConfigurations();
+    }
+
+    /**
+     * Async method to load all content configurations from JSON files
+     * @returns {Promise<void>}
+     */
     async loadContentConfigurations() {
         try {
             // Load all content configuration files in parallel

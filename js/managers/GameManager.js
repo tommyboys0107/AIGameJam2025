@@ -1,5 +1,7 @@
 // Game Manager - Central coordinator for all game systems
 import { GameEndType, GAME_CONSTANTS } from '../core/constants.js';
+import { InputHandler } from '../core/InputHandler.js';
+import { VisualFeedbackSystem } from '../ui/VisualFeedbackSystem.js';
 
 export class GameManager {
     constructor() {
@@ -11,6 +13,8 @@ export class GameManager {
         this.dataStreamGenerator = null;
         this.corruptionSystem = null;
         this.uiManager = null;
+        this.inputHandler = null;
+        this.visualFeedbackSystem = null;
         
         // Game timing
         this.gameStartTime = 0;
@@ -44,6 +48,15 @@ export class GameManager {
             throw new Error('GameManager requires all subsystems: phaseManager, dataStreamGenerator, corruptionSystem, uiManager');
         }
 
+        // Initialize input handler with canvas
+        const canvas = subsystems.canvas || document.getElementById('game-canvas');
+        if (!canvas) {
+            throw new Error('GameManager requires canvas element for input handling');
+        }
+        
+        this.inputHandler = new InputHandler(canvas, this.dataStreamGenerator);
+        this.visualFeedbackSystem = new VisualFeedbackSystem(canvas);
+
         // Set up event listeners and connections between systems
         this.setupSystemConnections();
         
@@ -69,6 +82,29 @@ export class GameManager {
         this.dataStreamGenerator.onObjectProcessed = (wasCorrect, wasCorrupted) => {
             this.corruptionSystem.processDecision(wasCorrect, wasCorrupted);
         };
+
+        // Connect input handler callbacks with visual feedback
+        this.inputHandler.setValidClickCallback((clickedObject, x, y) => {
+            console.log(`Valid click on ${clickedObject.isCorrupted ? 'corrupted' : 'legitimate'} object`);
+            const wasCorrect = clickedObject.isCorrupted; // Correct to block corrupted objects
+            if (wasCorrect) {
+                this.visualFeedbackSystem.showSuccessFeedback(x, y);
+                this.uiManager.showSuccessFeedback();
+            } else {
+                this.visualFeedbackSystem.showFailureFeedback(x, y);
+                this.uiManager.showFailureFeedback();
+            }
+        });
+
+        this.inputHandler.setInvalidClickCallback((x, y, reason) => {
+            console.log(`Invalid click at (${x}, ${y}): ${reason}`);
+            this.visualFeedbackSystem.showClickFeedback(x, y, reason, null);
+            this.uiManager.showFeedbackMessage('INVALID TARGET', 'warning', 1500);
+        });
+
+        this.inputHandler.setClickFeedbackCallback((x, y, type, object) => {
+            this.visualFeedbackSystem.showClickFeedback(x, y, type, object);
+        });
     }
 
     /**
@@ -93,6 +129,9 @@ export class GameManager {
         this.phaseManager.startGame();
         this.corruptionSystem.reset();
         this.dataStreamGenerator.startSpawning();
+        
+        // Enable input handling
+        this.inputHandler.enable();
         
         // Update UI
         this.uiManager.showGameplayUI();
@@ -126,6 +165,7 @@ export class GameManager {
         // Pause all subsystems
         this.phaseManager.pause();
         this.dataStreamGenerator.pause();
+        this.inputHandler.disable();
         
         // Stop game loop
         this.stopGameLoop();
@@ -156,6 +196,7 @@ export class GameManager {
         // Resume all subsystems
         this.phaseManager.resume();
         this.dataStreamGenerator.resume();
+        this.inputHandler.enable();
         
         // Restart game loop
         this.startGameLoop();
@@ -183,6 +224,7 @@ export class GameManager {
         // Stop all subsystems
         this.phaseManager.stop();
         this.dataStreamGenerator.stopSpawning();
+        this.inputHandler.disable();
         
         // Stop game loop
         this.stopGameLoop();
@@ -206,6 +248,7 @@ export class GameManager {
         this.stopGameLoop();
         this.phaseManager?.stop();
         this.dataStreamGenerator?.stopSpawning();
+        this.inputHandler?.disable();
         
         // Reset state
         this.resetGameState();
@@ -238,6 +281,10 @@ export class GameManager {
         this.phaseManager.update(elapsedTime);
         this.dataStreamGenerator.update();
         this.corruptionSystem.update();
+        this.visualFeedbackSystem.update(currentTime);
+        
+        // Render game objects and effects
+        this.renderGame();
         
         // Update UI with current corruption level
         this.uiManager.updateCorruptionMeter(this.corruptionSystem.getCurrentCorruption());
@@ -245,6 +292,27 @@ export class GameManager {
         
         // Continue game loop
         this.animationFrameId = requestAnimationFrame(this.gameLoop);
+    }
+
+    /**
+     * Renders the game canvas with objects and visual effects
+     * @private
+     */
+    renderGame() {
+        const canvas = document.getElementById('game-canvas');
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Render data stream objects
+        this.dataStreamGenerator.render(ctx);
+
+        // Render visual feedback effects on top
+        this.visualFeedbackSystem.render(ctx);
     }
 
     /**

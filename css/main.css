@@ -269,6 +269,83 @@ h1 {
     90% { transform: translateX(-2px); }
 }
 
+/* Visual Feedback Animations */
+@keyframes successPulse {
+    0% { 
+        box-shadow: 0 0 0 0 rgba(0, 255, 65, 0.7);
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 0 20px rgba(0, 255, 65, 0);
+        transform: scale(1.1);
+    }
+    100% { 
+        box-shadow: 0 0 0 0 rgba(0, 255, 65, 0);
+        transform: scale(1);
+    }
+}
+
+@keyframes failurePulse {
+    0% { 
+        box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7);
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 0 20px rgba(255, 68, 68, 0);
+        transform: scale(1.1);
+    }
+    100% { 
+        box-shadow: 0 0 0 0 rgba(255, 68, 68, 0);
+        transform: scale(1);
+    }
+}
+
+@keyframes clickRipple {
+    0% {
+        transform: scale(0);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+@keyframes objectHitFlash {
+    0%, 100% { 
+        border-color: transparent;
+        box-shadow: none;
+    }
+    50% { 
+        border-color: #00FF41;
+        box-shadow: 0 0 20px #00FF41;
+    }
+}
+
+@keyframes corruptionAlert {
+    0%, 100% { 
+        background-color: rgba(255, 68, 68, 0.1);
+        border-color: #FF4444;
+    }
+    50% { 
+        background-color: rgba(255, 68, 68, 0.3);
+        border-color: #FF6666;
+    }
+}
+
+@keyframes screenShake {
+    0%, 100% { transform: translateX(0); }
+    10% { transform: translateX(-2px); }
+    20% { transform: translateX(2px); }
+    30% { transform: translateX(-2px); }
+    40% { transform: translateX(2px); }
+    50% { transform: translateX(-2px); }
+    60% { transform: translateX(2px); }
+    70% { transform: translateX(-2px); }
+    80% { transform: translateX(2px); }
+    90% { transform: translateX(-2px); }
+}
+
 /* Flickering effect for system messages */
 .flicker-text {
     animation: flicker 0.5s infinite alternate;
@@ -276,6 +353,68 @@ h1 {
 
 .glitch-text {
     animation: glitch 0.3s infinite;
+}
+
+/* Visual Feedback Classes */
+.success-feedback {
+    animation: successPulse 0.5s ease-out;
+}
+
+.failure-feedback {
+    animation: failurePulse 0.5s ease-out;
+}
+
+.click-ripple {
+    animation: clickRipple 0.5s ease-out;
+}
+
+.object-hit {
+    animation: objectHitFlash 0.3s ease-out;
+}
+
+.corruption-alert {
+    animation: corruptionAlert 1s ease-in-out infinite;
+}
+
+.screen-shake {
+    animation: screenShake 0.5s ease-in-out;
+}
+
+/* Corruption meter feedback states */
+#corruption-meter.warning {
+    border-color: #FFD700;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+#corruption-meter.danger {
+    border-color: #FF4444;
+    box-shadow: 0 0 15px rgba(255, 68, 68, 0.7);
+    animation: corruptionAlert 0.5s ease-in-out infinite;
+}
+
+#corruption-meter.critical {
+    border-color: #FF0000;
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.9);
+    animation: corruptionAlert 0.3s ease-in-out infinite;
+}
+
+/* Status message feedback */
+#status-message.success {
+    color: #00FF41;
+    text-shadow: 0 0 10px #00FF41;
+    animation: successPulse 1s ease-out;
+}
+
+#status-message.warning {
+    color: #FFD700;
+    text-shadow: 0 0 10px #FFD700;
+    animation: pulse 1s ease-in-out infinite;
+}
+
+#status-message.error {
+    color: #FF4444;
+    text-shadow: 0 0 10px #FF4444;
+    animation: failurePulse 0.5s ease-out infinite;
 }
 
 /* Start Screen Styles */

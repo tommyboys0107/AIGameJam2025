@@ -117,6 +117,9 @@ export class UIManager {
             }
         }
         
+        // Update corruption meter visual feedback
+        this.updateCorruptionMeterFeedback(percentage);
+        
         // Update system status based on corruption level
         if (percentage >= 90) {
             this.updateSystemStatus('CRITICAL', true);
@@ -126,6 +129,28 @@ export class UIManager {
             this.updateSystemStatus('AI DETECTED', false);
         } else {
             this.updateSystemStatus('OPERATIONAL', false);
+        }
+    }
+
+    /**
+     * Updates corruption meter visual feedback based on corruption level
+     * @param {number} percentage - Corruption percentage (0-100)
+     */
+    updateCorruptionMeterFeedback(percentage) {
+        const corruptionMeter = document.getElementById('corruption-meter');
+        if (!corruptionMeter) return;
+
+        // Remove existing feedback classes
+        corruptionMeter.classList.remove('warning', 'danger', 'critical');
+
+        // Add appropriate feedback class based on corruption level
+        if (percentage >= 90) {
+            corruptionMeter.classList.add('critical');
+            this.triggerScreenShake();
+        } else if (percentage >= 70) {
+            corruptionMeter.classList.add('danger');
+        } else if (percentage >= 50) {
+            corruptionMeter.classList.add('warning');
         }
     }
     
@@ -152,6 +177,100 @@ export class UIManager {
             }, 500);
         }
     }
+
+    /**
+     * Shows success feedback in the UI
+     */
+    showSuccessFeedback() {
+        if (this.hudElements.statusMessage) {
+            this.hudElements.statusMessage.classList.add('success');
+            setTimeout(() => {
+                this.hudElements.statusMessage.classList.remove('success');
+            }, 1000);
+        }
+    }
+
+    /**
+     * Shows failure feedback in the UI
+     */
+    showFailureFeedback() {
+        if (this.hudElements.statusMessage) {
+            this.hudElements.statusMessage.classList.add('error');
+            setTimeout(() => {
+                this.hudElements.statusMessage.classList.remove('error');
+            }, 1000);
+        }
+        
+        // Trigger screen shake for failures
+        this.triggerScreenShake();
+    }
+
+    /**
+     * Triggers screen shake effect
+     */
+    triggerScreenShake() {
+        const gameContainer = document.getElementById('game-container');
+        if (gameContainer) {
+            gameContainer.classList.add('screen-shake');
+            setTimeout(() => {
+                gameContainer.classList.remove('screen-shake');
+            }, 500);
+        }
+    }
+
+    /**
+     * Shows temporary status message with visual feedback
+     * @param {string} message - Message to display
+     * @param {string} type - Type of message ('success', 'warning', 'error')
+     * @param {number} duration - Duration in milliseconds
+     */
+    showFeedbackMessage(message, type = 'info', duration = 2000) {
+        const originalStatus = this.hudElements.statusMessage?.textContent || 'OPERATIONAL';
+        
+        // Update status with new message
+        this.updateSystemStatus(message, type === 'error' || type === 'warning');
+        
+        // Add visual feedback class
+        if (this.hudElements.statusMessage) {
+            this.hudElements.statusMessage.classList.add(type);
+        }
+        
+        // Restore original status after duration
+        setTimeout(() => {
+            if (this.hudElements.statusMessage) {
+                this.hudElements.statusMessage.classList.remove(type);
+            }
+            this.updateSystemStatus(originalStatus, false);
+        }, duration);
+    }
+
+    /**
+     * Updates timer display with visual feedback for low time
+     * @param {number} elapsedTime - Elapsed time in milliseconds
+     */
+    updateTimer(elapsedTime) {
+        const totalGameTime = 120000; // 2 minutes in milliseconds
+        const remainingTime = Math.max(0, totalGameTime - elapsedTime);
+        const seconds = Math.ceil(remainingTime / 1000);
+        
+        // Update phase timer if it exists (this might be phase-specific timer)
+        if (this.hudElements.phaseTimer) {
+            // This would be updated by phase manager, but we can add visual feedback
+            const currentSeconds = parseInt(this.hudElements.phaseTimer.textContent);
+            if (currentSeconds <= 5 && currentSeconds > 0) {
+                this.hudElements.phaseTimer.classList.add('warning');
+            } else {
+                this.hudElements.phaseTimer.classList.remove('warning');
+            }
+        }
+        
+        // Add warning effects for low time
+        if (seconds <= 10) {
+            this.showFeedbackMessage('TIME CRITICAL', 'error', 1000);
+        } else if (seconds <= 30) {
+            this.showFeedbackMessage('TIME WARNING', 'warning', 1000);
+        }
+    }
     
     // Screen management methods
     showScreen(screenId) {
@@ -173,33 +292,35 @@ export class UIManager {
             screen.classList.add('hidden');
         }
     }
+
+    /**
+     * Shows the gameplay UI (game screen)
+     */
+    showGameplayUI() {
+        this.showScreen('game-screen');
+        this.initializeHUD();
+    }
+
+    /**
+     * Shows the menu UI
+     */
+    showMenuUI() {
+        this.showScreen('main-menu');
+    }
+
+    /**
+     * Shows the game over screen
+     * @param {string} endType - Type of game ending
+     * @param {Object} stats - Game statistics
+     */
+    showGameOverScreen(endType, stats) {
+        this.showGameOver(endType, stats);
+    }
     
     // Start Screen functionality
     initializeStartScreen() {
-        // Add a small delay to ensure DOM is fully loaded
-        setTimeout(() => {
-            const startGameButton = document.getElementById('start-game-button');
-            if (startGameButton) {
-                console.log('Start screen button found and event listener added');
-                startGameButton.addEventListener('click', (event) => {
-                    event.preventDefault();
-                    console.log('Start button clicked, transitioning to main menu');
-                    this.showMainMenu();
-                });
-                
-                // Also add a test to make sure the button is clickable
-                startGameButton.style.pointerEvents = 'auto';
-                startGameButton.style.cursor = 'pointer';
-            } else {
-                console.error('Start game button not found!');
-                // List all elements with class 'start-button' for debugging
-                const allStartButtons = document.querySelectorAll('.start-button');
-                console.log('Found start buttons:', allStartButtons.length);
-                allStartButtons.forEach((btn, index) => {
-                    console.log(`Button ${index}:`, btn.id, btn.textContent);
-                });
-            }
-        }, 100);
+        // Start screen is now handled directly in HTML
+        console.log('Start screen initialization - handled in HTML');
     }
     
     showMainMenu() {
