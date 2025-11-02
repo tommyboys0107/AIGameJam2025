@@ -92,6 +92,7 @@ export class InformationObjectPool {
         obj.y = y;
         obj.movementSpeed = movementSpeed;
         obj.isActive = true;
+        obj.hasBeenProcessed = false; // Reset processing flag
 
         // Update content properties
         obj.contentType = data.contentType;

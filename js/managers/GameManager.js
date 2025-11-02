@@ -258,10 +258,15 @@ export class GameManager {
                     }
                 };
                 
-                // Connect corruption level changes to audio/visual feedback
+                // Connect corruption level changes to audio/visual feedback and UI updates
                 this.corruptionSystem.onCorruptionChange = (currentCorruption, maxCorruption) => {
                     try {
                         const corruptionPercentage = (currentCorruption / maxCorruption) * 100;
+                        
+                        // Update UI immediately when corruption changes
+                        if (this.uiManager && typeof this.uiManager.updateCorruptionMeter === 'function') {
+                            this.uiManager.updateCorruptionMeter(currentCorruption);
+                        }
                         
                         // Play corruption sound for significant increases
                         if (this.audioManager && corruptionPercentage > 70) {
@@ -272,6 +277,8 @@ export class GameManager {
                         if (this.screenEffectsManager && corruptionPercentage > 80) {
                             this.screenEffectsManager.showScreenFlash('corruption', 0.2);
                         }
+                        
+                        console.log(`Corruption updated: ${currentCorruption}/${maxCorruption} (${corruptionPercentage.toFixed(1)}%)`);
                         
                     } catch (error) {
                         console.error('Error in corruption change handler:', error);
@@ -323,10 +330,10 @@ export class GameManager {
 
             // Connect data stream generator to corruption system for scoring
             if (this.dataStreamGenerator && typeof this.dataStreamGenerator === 'object') {
-                this.dataStreamGenerator.onObjectProcessed = (wasCorrect, wasCorrupted) => {
+                this.dataStreamGenerator.onObjectProcessed = (wasBlocked, wasCorrupted) => {
                     try {
                         if (this.corruptionSystem && typeof this.corruptionSystem.processDecision === 'function') {
-                            this.corruptionSystem.processDecision(wasCorrect, wasCorrupted);
+                            this.corruptionSystem.processDecision(wasBlocked, wasCorrupted);
                         }
                     } catch (error) {
                         console.error('Error processing object decision:', error);
@@ -843,8 +850,15 @@ export class GameManager {
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
-        // Clear canvas
+        // Save the initial context state
+        ctx.save();
+
+        // Clear canvas completely
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Reset any lingering canvas state that might cause darkening
+        ctx.globalAlpha = 1.0;
+        ctx.globalCompositeOperation = 'source-over';
 
         // Render background image
         this.renderBackground(ctx, canvas);
@@ -854,6 +868,9 @@ export class GameManager {
 
         // Render visual feedback effects on top
         this.visualFeedbackSystem.render(ctx);
+
+        // Restore the initial context state to prevent any lingering effects
+        ctx.restore();
     }
 
     /**

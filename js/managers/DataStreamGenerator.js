@@ -48,7 +48,7 @@ export class DataStreamGenerator {
         this.objectsSpawnedThisPhase = 0;
         
         // Event callbacks
-        this.onObjectProcessed = null; // Callback for when objects are processed (clicked or reach bottom)
+        this.onObjectProcessed = null; // Callback for when objects are processed: (wasBlocked, wasCorrupted) => void
         
         console.log('DataStreamGenerator initialized with settings:', this.settings);
     }
@@ -192,14 +192,23 @@ export class DataStreamGenerator {
      */
     checkObjectsReachedBottom() {
         const activeObjects = this.objectPool.getActiveObjects();
+        const objectsToProcess = [];
         
+        // First, identify objects that reached the bottom
         for (const obj of activeObjects) {
-            if (obj.hasReachedBottom(this.screenHeight)) {
-                // Object reached bottom - it was allowed through
-                if (this.onObjectProcessed) {
-                    const wasCorrect = !obj.isCorrupted; // Correct to allow legitimate objects through
-                    this.onObjectProcessed(wasCorrect, obj.isCorrupted);
-                }
+            if (obj.hasReachedBottom(this.screenHeight) && !obj.hasBeenProcessed) {
+                objectsToProcess.push(obj);
+                obj.hasBeenProcessed = true; // Mark to prevent double processing
+            }
+        }
+        
+        // Then process them
+        for (const obj of objectsToProcess) {
+            if (this.onObjectProcessed) {
+                // Object reached bottom - it was allowed through (not blocked)
+                const wasBlocked = false;
+                this.onObjectProcessed(wasBlocked, obj.isCorrupted);
+                console.log(`Object processed (reached bottom): corrupted=${obj.isCorrupted}, blocked=${wasBlocked}`);
             }
         }
     }
@@ -430,10 +439,12 @@ export class DataStreamGenerator {
     handleClick(mouseX, mouseY) {
         const clickedObject = this.objectPool.handleClick(mouseX, mouseY);
         
-        if (clickedObject && this.onObjectProcessed) {
-            // Object was blocked - determine if it was correct
-            const wasCorrect = clickedObject.isCorrupted; // Correct to block corrupted objects
-            this.onObjectProcessed(wasCorrect, clickedObject.isCorrupted);
+        if (clickedObject && this.onObjectProcessed && !clickedObject.hasBeenProcessed) {
+            // Object was blocked by player click
+            const wasBlocked = true;
+            clickedObject.hasBeenProcessed = true; // Mark to prevent double processing
+            this.onObjectProcessed(wasBlocked, clickedObject.isCorrupted);
+            console.log(`Object processed (clicked): corrupted=${clickedObject.isCorrupted}, blocked=${wasBlocked}`);
         }
         
         return clickedObject;

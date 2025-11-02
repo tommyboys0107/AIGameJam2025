@@ -36,8 +36,8 @@ export class VisualFeedbackSystem {
                 fadeRate: 2.0         // alpha reduction per second
             },
             screenFlash: {
-                duration: 150,
-                intensity: 0.3
+                duration: 100,  // Shorter duration to prevent sticking
+                intensity: 0.15  // Lower intensity to prevent too much darkening
             }
         };
         
@@ -65,10 +65,19 @@ export class VisualFeedbackSystem {
             const effect = this.activeEffects[i];
             effect.age += deltaTime;
 
-            // Remove expired effects
-            if (effect.age >= effect.duration) {
+            // Remove expired effects or effects that are too old (safety cleanup)
+            if (effect.age >= effect.duration || effect.age > effect.duration * 2) {
                 this.activeEffects.splice(i, 1);
+                if (effect.age > effect.duration * 2) {
+                    console.warn(`Removed stuck visual effect: ${effect.type}`);
+                }
             }
+        }
+
+        // Safety cleanup: if we have too many effects, clear the oldest ones
+        if (this.activeEffects.length > 50) {
+            console.warn('Too many active effects, clearing oldest ones');
+            this.activeEffects.splice(0, this.activeEffects.length - 25);
         }
     }
 
@@ -80,13 +89,17 @@ export class VisualFeedbackSystem {
         const renderCtx = ctx || this.ctx;
         if (!renderCtx) return;
 
+        // Save the initial context state
         renderCtx.save();
 
-        // Render each active effect
+        // Render each active effect with individual context management
         for (const effect of this.activeEffects) {
+            renderCtx.save(); // Save before each effect
             this.renderEffect(renderCtx, effect);
+            renderCtx.restore(); // Restore after each effect
         }
 
+        // Restore the initial context state
         renderCtx.restore();
     }
 
@@ -244,9 +257,14 @@ export class VisualFeedbackSystem {
     renderScreenFlash(ctx, effect) {
         const alpha = this.effectConfig.screenFlash.intensity * (1 - progress);
         
-        ctx.fillStyle = effect.color;
-        ctx.globalAlpha = alpha;
-        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        // Only render if alpha is significant enough to be visible
+        if (alpha > 0.01) {
+            ctx.save();
+            ctx.fillStyle = effect.color;
+            ctx.globalAlpha = alpha;
+            ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            ctx.restore();
+        }
     }
 
     /**
@@ -425,6 +443,38 @@ export class VisualFeedbackSystem {
     clearAllEffects() {
         this.activeEffects = [];
         console.log('All visual effects cleared');
+    }
+
+    /**
+     * Clears screen flash effects specifically (useful for fixing stuck dark overlays)
+     */
+    clearScreenFlashEffects() {
+        const beforeCount = this.activeEffects.length;
+        this.activeEffects = this.activeEffects.filter(effect => effect.type !== 'screenFlash');
+        const afterCount = this.activeEffects.length;
+        
+        if (beforeCount !== afterCount) {
+            console.log(`Cleared ${beforeCount - afterCount} screen flash effects`);
+        }
+    }
+
+    /**
+     * Force clears any effects that might be causing visual issues
+     */
+    forceCleanup() {
+        this.clearScreenFlashEffects();
+        
+        // Remove any effects older than their intended duration
+        const currentTime = performance.now();
+        this.activeEffects = this.activeEffects.filter(effect => {
+            const isExpired = effect.age >= effect.duration;
+            if (isExpired) {
+                console.log(`Force removed expired effect: ${effect.type}`);
+            }
+            return !isExpired;
+        });
+        
+        console.log('Force cleanup completed');
     }
 
     /**

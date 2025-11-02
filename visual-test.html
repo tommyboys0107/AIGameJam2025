@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Effects Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            color: #00FF41;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+        }
+        
+        #test-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            cursor: crosshair;
+        }
+        
+        #controls {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border: 1px solid #00FF41;
+            z-index: 100;
+        }
+        
+        button {
+            background: #00BFFF;
+            color: black;
+            border: none;
+            padding: 8px 15px;
+            margin: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+        }
+        
+        button:hover {
+            background: #00FF41;
+        }
+        
+        #info {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            border: 1px solid #00FF41;
+            z-index: 100;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="test-canvas"></canvas>
+    
+    <div id="controls">
+        <div>Visual Effects Test</div>
+        <button onclick="testScreenFlash()">Test Screen Flash</button>
+        <button onclick="testClickRipple()">Test Click Ripple</button>
+        <button onclick="clearEffects()">Clear Effects</button>
+        <button onclick="forceRefresh()">Force Refresh</button>
+    </div>
+    
+    <div id="info">
+        <div>Click anywhere to test click effects</div>
+        <div>Use Ctrl+Shift+C to emergency clear</div>
+        <div>Active Effects: <span id="effect-count">0</span></div>
+    </div>
+
+    <script type="module">
+        import { VisualFeedbackSystem } from './js/ui/VisualFeedbackSystem.js';
+        
+        const canvas = document.getElementById('test-canvas');
+        const ctx = canvas.getContext('2d');
+        const effectCountSpan = document.getElementById('effect-count');
+        
+        let visualSystem;
+        let animationId;
+        
+        function setupCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            // Clear canvas
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw grid
+            ctx.strokeStyle = '#00FF41';
+            ctx.lineWidth = 1;
+            ctx.globalAlpha = 0.2;
+            
+            for (let x = 0; x < canvas.width; x += 50) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            
+            for (let y = 0; y < canvas.height; y += 50) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+            
+            ctx.globalAlpha = 1;
+        }
+        
+        function animate(currentTime) {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Reset context state
+            ctx.save();
+            ctx.globalAlpha = 1.0;
+            ctx.globalCompositeOperation = 'source-over';
+            
+            // Draw background
+            setupCanvas();
+            
+            // Update and render visual effects
+            if (visualSystem) {
+                visualSystem.update(currentTime);
+                visualSystem.render(ctx);
+                
+                // Update effect count
+                effectCountSpan.textContent = visualSystem.getActiveEffectCount();
+            }
+            
+            ctx.restore();
+            
+            animationId = requestAnimationFrame(animate);
+        }
+        
+        function init() {
+            setupCanvas();
+            visualSystem = new VisualFeedbackSystem(canvas);
+            
+            // Start animation loop
+            animate(performance.now());
+            
+            // Add click listener
+            canvas.addEventListener('click', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                // Random effect type
+                const types = ['object_hit', 'missed', 'outside_bounds'];
+                const type = types[Math.floor(Math.random() * types.length)];
+                
+                visualSystem.showClickFeedback(x, y, type);
+            });
+        }
+        
+        // Global test functions
+        window.testScreenFlash = function() {
+            if (visualSystem) {
+                visualSystem.showScreenFlash('#FF4444', 0.3);
+                console.log('Screen flash test triggered');
+            }
+        };
+        
+        window.testClickRipple = function() {
+            if (visualSystem) {
+                const x = canvas.width / 2;
+                const y = canvas.height / 2;
+                visualSystem.showClickFeedback(x, y, 'object_hit');
+                console.log('Click ripple test triggered');
+            }
+        };
+        
+        window.clearEffects = function() {
+            if (visualSystem) {
+                visualSystem.forceCleanup();
+                console.log('Effects cleared');
+            }
+        };
+        
+        window.forceRefresh = function() {
+            ctx.save();
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.globalAlpha = 1.0;
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.restore();
+            
+            if (visualSystem) {
+                visualSystem.clearAllEffects();
+            }
+            
+            setupCanvas();
+            console.log('Force refresh completed');
+        };
+        
+        // Emergency clear shortcut
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.shiftKey && e.key === 'C') {
+                e.preventDefault();
+                window.forceRefresh();
+                console.log('Emergency clear triggered');
+            }
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            setupCanvas();
+        });
+        
+        // Initialize when page loads
+        init();
+    </script>
+</body>
+</html>
+</content>
+</invoke>

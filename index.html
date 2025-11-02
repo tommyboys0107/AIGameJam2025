@@ -319,6 +319,17 @@
         // Add resize listener
         window.addEventListener('resize', debounce(handleCanvasResize, 250));
 
+        // Add keyboard shortcut to clear visual effects (Ctrl+Shift+C)
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.shiftKey && e.key === 'C') {
+                e.preventDefault();
+                console.log('Emergency visual effects clear triggered');
+                if (typeof window.refreshCanvas === 'function') {
+                    window.refreshCanvas();
+                }
+            }
+        });
+
         // Debounce function to limit resize events
         function debounce(func, wait) {
             let timeout;
@@ -389,6 +400,54 @@
 
         // Make test function available globally for debugging
         window.testCanvasClicks = testCanvasClicks;
+        
+        // Debug function to clear visual effects if screen gets stuck dark
+        window.clearVisualEffects = function() {
+            if (gameManager && gameManager.visualFeedbackSystem) {
+                gameManager.visualFeedbackSystem.forceCleanup();
+                console.log('Visual effects force cleared');
+            } else {
+                console.log('Visual feedback system not available');
+            }
+        };
+
+        // Debug function to test corruption system
+        window.testCorruption = function(amount = 10) {
+            if (gameManager && gameManager.corruptionSystem) {
+                console.log('Testing corruption system...');
+                gameManager.corruptionSystem.simulateCorruption(amount);
+                console.log(`Current corruption: ${gameManager.corruptionSystem.getCurrentCorruption()}`);
+            } else {
+                console.log('Corruption system not available');
+            }
+        };
+
+        // Debug function to force refresh the canvas if it gets stuck
+        window.refreshCanvas = function() {
+            const canvas = document.getElementById('game-canvas');
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    // Force clear everything
+                    ctx.save();
+                    ctx.setTransform(1, 0, 0, 1, 0, 0);
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.globalAlpha = 1.0;
+                    ctx.globalCompositeOperation = 'source-over';
+                    ctx.restore();
+                    console.log('Canvas force refreshed');
+                    
+                    // Clear visual effects too
+                    if (gameManager && gameManager.visualFeedbackSystem) {
+                        gameManager.visualFeedbackSystem.forceCleanup();
+                    }
+                } else {
+                    console.log('Canvas context not available');
+                }
+            } else {
+                console.log('Canvas element not found');
+            }
+        };
 
         // Diagnostic function to check game state
         function diagnoseClickIssue() {
